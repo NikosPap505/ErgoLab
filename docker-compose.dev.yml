@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ergolab-postgres-dev
+    environment:
+      POSTGRES_USER: ergolab
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: ergolab_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - ergolab-dev-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ergolab-redis-dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - ergolab-dev-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: ergolab-minio-dev
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_dev_data:/data
+    networks:
+      - ergolab-dev-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: ergolab-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://ergolab:dev_password@postgres:5432/ergolab_dev
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET: ergolab-files-dev
+      SECRET_KEY: dev-secret-key-change-in-production
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - ergolab-dev-network
+
+  portal:
+    build:
+      context: ./portal-web
+      dockerfile: Dockerfile
+      target: development
+    container_name: ergolab-portal-dev
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./portal-web:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - ergolab-dev-network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  minio_dev_data:
+
+networks:
+  ergolab-dev-network:
+    driver: bridge
