@@ -12,9 +12,18 @@ from app.models.document import Document, DocumentType
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
+# Internal S3 client for uploads (uses Docker internal network)
 s3_client = boto3.client(
     "s3",
     endpoint_url=settings.S3_ENDPOINT,
+    aws_access_key_id=settings.S3_ACCESS_KEY,
+    aws_secret_access_key=settings.S3_SECRET_KEY,
+)
+
+# Public S3 client for presigned URLs (uses localhost for browser access)
+s3_public_client = boto3.client(
+    "s3",
+    endpoint_url=settings.S3_PUBLIC_ENDPOINT,
     aws_access_key_id=settings.S3_ACCESS_KEY,
     aws_secret_access_key=settings.S3_SECRET_KEY,
 )
@@ -89,12 +98,13 @@ def download_document(
         raise HTTPException(status_code=404, detail="Document not found")
 
     try:
-        url = s3_client.generate_presigned_url(
+        # Use public client for browser-accessible URLs
+        url = s3_public_client.generate_presigned_url(
             "get_object",
             Params={"Bucket": settings.S3_BUCKET, "Key": document.file_path},
             ExpiresIn=3600,
         )
-        return {"download_url": url}
+        return {"url": url, "download_url": url}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Download failed: {exc}")
 
@@ -116,3 +126,57 @@ def get_project_documents(
         }
         for doc in documents
     ]
+
+
+@router.get("/{document_id}")
+def get_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Get single document metadata"""
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {
+        "id": document.id,
+        "title": document.title,
+        "description": document.description,
+        "file_type": document.file_type.value,
+        "file_path": document.file_path,
+        "file_size": document.file_size,
+        "project_id": document.project_id,
+        "uploaded_at": document.uploaded_at,
+        "uploaded_by_id": document.uploaded_by_id,
+    }
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Delete a document and its S3 file"""
+    document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Delete from S3
+    try:
+        s3_client.delete_object(
+            Bucket=settings.S3_BUCKET,
+            Key=document.file_path,
+        )
+    except Exception as exc:
+        # Log but don't fail if S3 delete fails
+        print(f"Warning: Could not delete S3 file: {exc}")
+
+    # Delete related annotations
+    from app.models.document import Annotation
+    db.query(Annotation).filter(Annotation.document_id == document_id).delete()
+
+    # Delete document record
+    db.delete(document)
+    db.commit()
+    return None

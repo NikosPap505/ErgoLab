@@ -35,7 +35,10 @@ class Annotation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     document_id = Column(Integer, ForeignKey("documents.id"), nullable=False)
-    annotation_data = Column(Text, nullable=False)
+    page_number = Column(Integer, default=1)
+    annotation_type = Column(String(50), default="canvas")
+    content = Column(Text)  # JSON string for canvas data
+    annotation_data = Column(Text, nullable=True)  # Legacy field
     created_by_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

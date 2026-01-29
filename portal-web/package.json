@@ -8,7 +8,6 @@
     "autoprefixer": "^10.4.16",
     "axios": "^1.6.5",
     "fabric": "^7.1.0",
-    "pdfjs-dist": "^5.4.530",
     "postcss": "^8.4.33",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

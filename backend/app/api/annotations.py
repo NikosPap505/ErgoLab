@@ -1,4 +1,5 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -14,15 +15,21 @@ router = APIRouter(prefix="/api/annotations", tags=["Annotations"])
 
 class AnnotationCreate(BaseModel):
     document_id: int
-    annotation_data: str
+    page_number: Optional[int] = 1
+    annotation_type: Optional[str] = "canvas"
+    content: Optional[str] = None
+    annotation_data: Optional[str] = None  # Legacy support
 
 
 class AnnotationResponse(BaseModel):
     id: int
     document_id: int
-    annotation_data: str
-    created_by_id: int
-    created_at: str
+    page_number: int
+    annotation_type: Optional[str] = "canvas"
+    content: Optional[str] = None
+    annotation_data: Optional[str] = None
+    created_by_id: Optional[int] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -40,6 +47,9 @@ def create_annotation(
 
     annotation = Annotation(
         document_id=data.document_id,
+        page_number=data.page_number or 1,
+        annotation_type=data.annotation_type or "canvas",
+        content=data.content,
         annotation_data=data.annotation_data,
         created_by_id=current_user.id,
     )

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     REDIS_URL: str = "redis://redis:6379/0"
     S3_ENDPOINT: str
+    S3_PUBLIC_ENDPOINT: str = "http://localhost:9000"  # Public URL for browser access
     S3_ACCESS_KEY: str
     S3_SECRET_KEY: str
     S3_BUCKET: str = "ergolab-files"

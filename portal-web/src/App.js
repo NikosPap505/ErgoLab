@@ -9,12 +9,14 @@ import Dashboard from './pages/Dashboard';
 import Materials from './pages/Materials';
 import Projects from './pages/Projects';
 import Warehouses from './pages/Warehouses';
+import Documents from './pages/Documents';
+import DocumentAnnotate from './pages/DocumentAnnotate';
 
 function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             
@@ -29,7 +31,8 @@ function App() {
                       <Route path="/projects" element={<Projects />} />
                       <Route path="/warehouses" element={<Warehouses />} />
                       <Route path="/transfers" element={<div className="p-4">Transfers (TODO)</div>} />
-                      <Route path="/documents" element={<div className="p-4">Documents (TODO)</div>} />
+                      <Route path="/documents" element={<Documents />} />
+                      <Route path="/documents/:documentId/annotate" element={<DocumentAnnotate />} />
                       <Route path="/reports" element={<div className="p-4">Reports (TODO)</div>} />
                     </Routes>
                   </Layout>

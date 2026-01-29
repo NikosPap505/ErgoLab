@@ -47,6 +47,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -57,6 +58,27 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - ergolab-network
+
+  # MinIO client to configure CORS
+  minio-setup:
+    image: minio/mc:latest
+    container_name: ergolab-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
+      mc mb myminio/$${S3_BUCKET:-ergolab-files} --ignore-existing;
+      mc anonymous set download myminio/$${S3_BUCKET:-ergolab-files};
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: ${S3_BUCKET:-ergolab-files}
     networks:
       - ergolab-network
 
