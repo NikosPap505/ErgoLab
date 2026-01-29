@@ -18,6 +18,7 @@ from app.api import (
     warehouses,
 )
 from app.core.config import settings
+from app.core.metrics import MetricsMiddleware, metrics, get_health_status
 
 
 def ensure_s3_bucket():
@@ -43,6 +44,7 @@ def ensure_s3_bucket():
 async def lifespan(app: FastAPI):
     # Startup
     ensure_s3_bucket()
+    print("✓ ErgoLab API started with performance monitoring")
     yield
     # Shutdown
     pass
@@ -54,6 +56,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Add performance monitoring middleware
+app.add_middleware(MetricsMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,6 +83,25 @@ app.include_router(users.router)
 @app.get("/")
 def read_root():
     return {"message": "ErgoLab API is running"}
+
+
+@app.get("/health")
+def health_check():
+    """Application health check endpoint"""
+    return get_health_status()
+
+
+@app.get("/metrics")
+def get_metrics():
+    """Get performance metrics"""
+    return metrics.get_stats()
+
+
+@app.post("/metrics/reset")
+def reset_metrics():
+    """Reset performance metrics"""
+    metrics.reset()
+    return {"message": "Metrics reset successfully"}
 
 
 @app.get("/health")

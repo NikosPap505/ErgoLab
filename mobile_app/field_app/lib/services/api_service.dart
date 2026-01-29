@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator
+  static const String baseUrl = 'http://192.168.2.8:8000';
   // For physical device: 'http://YOUR_LOCAL_IP:8000'
   
   final Dio _dio = Dio();
@@ -13,8 +13,8 @@ class ApiService {
 
   ApiService() {
     _dio.options.baseUrl = baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
     
     _dio.interceptors.add(
       InterceptorsWrapper(

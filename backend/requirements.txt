@@ -35,3 +35,7 @@ pillow==11.1.0
 
 # WebSockets for real-time
 websockets==14.1
+
+# Performance Monitoring
+psutil==5.9.8
+locust==2.24.0
