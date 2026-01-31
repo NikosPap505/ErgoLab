@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/connectivity_service.dart';
+import '../services/offline_database.dart';
+import '../services/image_compression_service.dart';
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -17,6 +20,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isUploading = false;
+  bool _isCompressing = false;
+  String? _compressedPath;
 
   @override
   void dispose() {
@@ -37,6 +42,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       if (image != null) {
         setState(() {
           _capturedImage = image;
+          _isCompressing = true;
           // Auto-generate title from timestamp
           if (_titleController.text.isEmpty) {
             final now = DateTime.now();
@@ -44,9 +50,19 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 'Φωτο_${now.day}-${now.month}-${now.year}_${now.hour}${now.minute}';
           }
         });
+        
+        // Compress image in background
+        final compressed = await ImageCompressionService.compressImage(image.path);
+        if (mounted) {
+          setState(() {
+            _compressedPath = compressed;
+            _isCompressing = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isCompressing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Σφάλμα: $e'),
@@ -75,27 +91,67 @@ class _CaptureScreenState extends State<CaptureScreen> {
     });
 
     final appState = context.read<AppState>();
+    final connectivity = context.read<ConnectivityService>();
+    final pathToUpload = _compressedPath ?? _capturedImage!.path;
     
-    final result = await appState.apiService.uploadDocument(
-      filePath: _capturedImage!.path,
-      fileName: _titleController.text,
-      fileType: 'image',
-      projectId: appState.selectedProjectId,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-    );
+    bool success = false;
+    bool savedOffline = false;
+
+    if (connectivity.isOnline) {
+      // Try online upload
+      final result = await appState.apiService.uploadDocument(
+        filePath: pathToUpload,
+        fileName: _titleController.text,
+        fileType: 'photo',
+        projectId: appState.selectedProjectId,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+      );
+      success = result != null;
+    }
+    
+    if (!success) {
+      // Save for offline sync
+      await OfflineDatabase.addPendingUpload(
+        filePath: pathToUpload,
+        title: _titleController.text,
+        description: _descriptionController.text.isEmpty 
+            ? null 
+            : _descriptionController.text,
+        projectId: appState.selectedProjectId,
+        fileType: 'photo',
+      );
+      savedOffline = true;
+      success = true;
+    }
 
     if (mounted) {
       setState(() {
         _isUploading = false;
       });
 
-      if (result != null) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Η φωτογραφία αποθηκεύτηκε επιτυχώς!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  savedOffline ? Icons.cloud_off : Icons.cloud_done,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    savedOffline
+                        ? 'Αποθηκεύτηκε τοπικά - θα συγχρονιστεί'
+                        : 'Η φωτογραφία αποθηκεύτηκε επιτυχώς!',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: savedOffline ? Colors.orange : Colors.green,
           ),
         );
         Navigator.of(context).pop();

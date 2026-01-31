@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/connectivity_service.dart';
+import '../widgets/offline_widgets.dart';
 
 class AddStockScreen extends StatefulWidget {
   final Map<String, dynamic>? material;
@@ -53,6 +55,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final appState = context.read<AppState>();
+    final connectivity = context.read<ConnectivityService>();
     
     if (appState.selectedWarehouseId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,7 +71,8 @@ class _AddStockScreenState extends State<AddStockScreen> {
       _isSubmitting = true;
     });
 
-    final success = await appState.apiService.addStockTransaction(
+    // Use offline-first transaction method
+    final success = await appState.addStockTransaction(
       warehouseId: appState.selectedWarehouseId!,
       materialId: _selectedMaterialId!,
       transactionType: _transactionType,
@@ -82,14 +86,28 @@ class _AddStockScreenState extends State<AddStockScreen> {
 
     if (mounted) {
       if (success) {
+        final isOnline = connectivity.isOnline;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _transactionType == 'in'
-                  ? 'Προστέθηκαν ${_quantityController.text} τεμάχια επιτυχώς'
-                  : 'Αφαιρέθηκαν ${_quantityController.text} τεμάχια επιτυχώς',
+            content: Row(
+              children: [
+                Icon(
+                  isOnline ? Icons.cloud_done : Icons.cloud_off,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _transactionType == 'in'
+                        ? 'Προστέθηκαν ${_quantityController.text} τεμάχια ${isOnline ? "✓" : "(θα συγχρονιστεί)"}'
+                        : 'Αφαιρέθηκαν ${_quantityController.text} τεμάχια ${isOnline ? "✓" : "(θα συγχρονιστεί)"}',
+                  ),
+                ),
+              ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: isOnline ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 2),
           ),
         );
         Navigator.of(context).pop();

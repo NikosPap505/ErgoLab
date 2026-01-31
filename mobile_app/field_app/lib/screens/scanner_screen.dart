@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/connectivity_service.dart';
+import '../services/offline_database.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -29,10 +31,40 @@ class _ScannerScreenState extends State<ScannerScreen> {
     });
 
     final appState = context.read<AppState>();
-    final material = await appState.apiService.getMaterialBySku(code);
+    final connectivity = context.read<ConnectivityService>();
+    
+    Map<String, dynamic>? material;
+    bool isOfflineData = false;
+    
+    // First try local cache (faster)
+    final cachedMaterial = await OfflineDatabase.getCachedMaterialBySku(code);
+    if (cachedMaterial != null) {
+      material = cachedMaterial;
+      isOfflineData = !connectivity.isOnline;
+    } else if (connectivity.isOnline) {
+      // Try API if not in cache and online
+      material = await appState.apiService.getMaterialBySku(code);
+    }
 
     if (mounted) {
       if (material != null) {
+        // Show offline indicator if needed
+        if (isOfflineData) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.cloud_off, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text('Offline mode - using cached data'),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+        
         Navigator.of(context).pushReplacementNamed(
           '/add-stock',
           arguments: material,
@@ -40,7 +72,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Υλικό με SKU "$code" δεν βρέθηκε'),
+            content: Text(
+              connectivity.isOnline
+                  ? 'Υλικό με SKU "$code" δεν βρέθηκε'
+                  : 'Υλικό "$code" δεν βρέθηκε (offline)',
+            ),
             backgroundColor: Colors.orange,
             action: SnackBarAction(
               label: 'OK',
@@ -58,9 +94,29 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivity = context.watch<ConnectivityService>();
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Σάρωση Barcode'),
+        title: Row(
+          children: [
+            const Text('Σάρωση Barcode'),
+            if (!connectivity.isOnline) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'OFFLINE',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ],
+        ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [

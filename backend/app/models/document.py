@@ -22,6 +22,7 @@ class Document(Base):
     description = Column(Text)
     file_type = Column(Enum(DocumentType), nullable=False)
     file_path = Column(String(500), nullable=False)
+    thumbnail_path = Column(String(500), nullable=True)  # Path to thumbnail for images
     file_size = Column(Integer)
     uploaded_by_id = Column(Integer, ForeignKey("users.id"))
     uploaded_at = Column(DateTime, default=datetime.utcnow)

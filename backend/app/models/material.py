@@ -31,3 +31,4 @@ class Material(Base):
 
     inventory_stocks = relationship("InventoryStock", back_populates="material")
     stock_transactions = relationship("StockTransaction", back_populates="material")
+    cost_entries = relationship("CostTracking", back_populates="material")

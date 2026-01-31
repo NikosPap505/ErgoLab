@@ -1,17 +1,29 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = useCallback((message, type = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
-  };
+  }, []);
+
+  const showSuccess = useCallback((message) => {
+    showNotification(message, 'success');
+  }, [showNotification]);
+
+  const showError = useCallback((message) => {
+    showNotification(message, 'error');
+  }, [showNotification]);
+
+  const showInfo = useCallback((message) => {
+    showNotification(message, 'info');
+  }, [showNotification]);
 
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={{ showNotification, showSuccess, showError, showInfo }}>
       {children}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-pulse">

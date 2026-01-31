@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
+    analytics,
     annotations,
     auth,
     documents,
@@ -17,6 +18,7 @@ from app.api import (
     users,
     warehouses,
 )
+from app.api import reports_full
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, metrics, get_health_status
 
@@ -78,6 +80,8 @@ app.include_router(documents.router)
 app.include_router(annotations.router)
 app.include_router(reports.router)
 app.include_router(users.router)
+app.include_router(analytics.router)
+app.include_router(reports_full.router, prefix="/api/reports", tags=["Reports System"])
 
 
 @app.get("/")
@@ -104,6 +108,16 @@ def reset_metrics():
     return {"message": "Metrics reset successfully"}
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+@app.get("/cache/stats")
+def get_cache_stats():
+    """Get cache statistics"""
+    from app.core.cache import cache
+    return cache.get_stats()
+
+
+@app.post("/cache/clear")
+def clear_cache():
+    """Clear all cache entries"""
+    from app.core.cache import cache
+    cache.flush_all()
+    return {"message": "Cache cleared successfully"}

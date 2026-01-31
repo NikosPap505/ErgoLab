@@ -35,6 +35,17 @@ class Project(Base):
     assigned_users = relationship("ProjectAssignment", back_populates="project")
     documents = relationship("Document", back_populates="project")
     reports = relationship("Report", back_populates="project")
+    
+    # Analytics relationships
+    costs = relationship("CostTracking", back_populates="project")
+    budget_allocation = relationship("Budget", back_populates="project", uselist=False)
+    
+    # Reports relationships
+    daily_reports = relationship("DailyReport", back_populates="project")
+    issues = relationship("Issue", back_populates="project")
+    work_items = relationship("WorkItem", back_populates="project")
+    labor_logs = relationship("LaborLog", back_populates="project")
+    equipment_logs = relationship("EquipmentLog", back_populates="project")
 
 
 class ProjectAssignment(Base):

@@ -49,8 +49,8 @@ class ImageOptimizer:
     def optimize_image(
         cls,
         image_bytes: bytes,
-        max_size: Tuple[int, int] = None,
-        quality: int = None,
+        max_size: Optional[Tuple[int, int]] = None,
+        quality: Optional[int] = None,
         format: str = 'JPEG'
     ) -> Tuple[bytes, dict]:
         """
@@ -65,8 +65,8 @@ class ImageOptimizer:
         Returns:
             Tuple of (optimized_bytes, metadata_dict)
         """
-        max_size = max_size or cls.DEFAULT_MAX_SIZE
-        quality = quality or cls.DEFAULT_QUALITY
+        effective_max_size: Tuple[int, int] = max_size if max_size is not None else cls.DEFAULT_MAX_SIZE
+        effective_quality: int = quality if quality is not None else cls.DEFAULT_QUALITY
         
         original_size = len(image_bytes)
         
@@ -80,26 +80,30 @@ class ImageOptimizer:
                 img = cls._convert_to_rgb(img)
             
             # Resize if larger than max_size (maintains aspect ratio)
-            if img.size[0] > max_size[0] or img.size[1] > max_size[1]:
-                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            if img.size[0] > effective_max_size[0] or img.size[1] > effective_max_size[1]:
+                img.thumbnail(effective_max_size, Image.Resampling.LANCZOS)
                 logger.info(f"Resized image from {original_dimensions} to {img.size}")
             
             # Auto-rotate based on EXIF orientation
             try:
                 from PIL import ExifTags
-                for orientation in ExifTags.TAGS.keys():
-                    if ExifTags.TAGS[orientation] == 'Orientation':
+                from PIL.ExifTags import TAGS
+                orientation_key: Optional[int] = None
+                for tag_id, tag_name in TAGS.items():
+                    if tag_name == 'Orientation':
+                        orientation_key = tag_id
                         break
-                exif = img._getexif()
-                if exif:
-                    orientation_value = exif.get(orientation)
-                    if orientation_value == 3:
-                        img = img.rotate(180, expand=True)
-                    elif orientation_value == 6:
-                        img = img.rotate(270, expand=True)
-                    elif orientation_value == 8:
-                        img = img.rotate(90, expand=True)
-            except (AttributeError, KeyError, IndexError):
+                if orientation_key is not None and hasattr(img, 'getexif'):
+                    exif_data = img.getexif()
+                    if exif_data:
+                        orientation_value = exif_data.get(orientation_key)
+                        if orientation_value == 3:
+                            img = img.rotate(180, expand=True)
+                        elif orientation_value == 6:
+                            img = img.rotate(270, expand=True)
+                        elif orientation_value == 8:
+                            img = img.rotate(90, expand=True)
+            except (AttributeError, KeyError, IndexError, TypeError):
                 pass  # No EXIF data
             
             # Compress
@@ -110,7 +114,7 @@ class ImageOptimizer:
             }
             
             if format.upper() in ('JPEG', 'WEBP'):
-                save_kwargs['quality'] = quality
+                save_kwargs['quality'] = effective_quality
             elif format.upper() == 'PNG':
                 save_kwargs['compress_level'] = 6
             
@@ -146,7 +150,7 @@ class ImageOptimizer:
     def create_thumbnail(
         cls,
         image_bytes: bytes,
-        size: Tuple[int, int] = None,
+        size: Optional[Tuple[int, int]] = None,
         format: str = 'JPEG'
     ) -> Optional[bytes]:
         """
@@ -160,7 +164,7 @@ class ImageOptimizer:
         Returns:
             Thumbnail bytes or None on failure
         """
-        size = size or cls.DEFAULT_THUMBNAIL_SIZE
+        effective_size: Tuple[int, int] = size if size is not None else cls.DEFAULT_THUMBNAIL_SIZE
         
         try:
             img = Image.open(io.BytesIO(image_bytes))
@@ -170,7 +174,7 @@ class ImageOptimizer:
                 img = cls._convert_to_rgb(img)
             
             # Create thumbnail (maintains aspect ratio)
-            img.thumbnail(size, Image.Resampling.LANCZOS)
+            img.thumbnail(effective_size, Image.Resampling.LANCZOS)
             
             output = io.BytesIO()
             save_kwargs = {
@@ -185,7 +189,7 @@ class ImageOptimizer:
             
             thumbnail_bytes = output.getvalue()
             logger.debug(
-                f"Thumbnail created: {size[0]}x{size[1]}, "
+                f"Thumbnail created: {effective_size[0]}x{effective_size[1]}, "
                 f"{round(len(thumbnail_bytes) / 1024, 2)}KB"
             )
             

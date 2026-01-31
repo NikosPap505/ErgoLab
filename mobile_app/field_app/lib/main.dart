@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
+import 'services/connectivity_service.dart';
+import 'services/sync_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/scanner_screen.dart';
@@ -21,24 +23,35 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AppState()..initialize(),
-      child: MaterialApp(
-        title: 'ErgoLab Field',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
-        initialRoute: '/login',
-        routes: {
-          '/login': (context) => const LoginScreen(),
-          '/home': (context) => const HomeScreen(),
-          '/scanner': (context) => const ScannerScreen(),
-          '/add-stock': (context) {
-            final material = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-            return AddStockScreen(material: material);
-          },
-          '/inventory': (context) => const InventoryScreen(),
-          '/capture': (context) => const CaptureScreen(),
+      child: Consumer<AppState>(
+        builder: (context, appState, child) {
+          // Provide nested providers for connectivity and sync services
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: appState.connectivityService),
+              ChangeNotifierProvider.value(value: appState.syncService),
+            ],
+            child: MaterialApp(
+              title: 'ErgoLab Field',
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+                useMaterial3: true,
+              ),
+              initialRoute: '/login',
+              routes: {
+                '/login': (context) => const LoginScreen(),
+                '/home': (context) => const HomeScreen(),
+                '/scanner': (context) => const ScannerScreen(),
+                '/add-stock': (context) {
+                  final material = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                  return AddStockScreen(material: material);
+                },
+                '/inventory': (context) => const InventoryScreen(),
+                '/capture': (context) => const CaptureScreen(),
+              },
+            ),
+          );
         },
       ),
     );

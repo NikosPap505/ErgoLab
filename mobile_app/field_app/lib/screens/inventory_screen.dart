@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/connectivity_service.dart';
+import '../services/offline_database.dart';
+import '../widgets/offline_widgets.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -12,6 +15,7 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   List<dynamic> _inventory = [];
   bool _isLoading = true;
+  bool _isOfflineData = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
@@ -29,6 +33,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Future<void> _loadInventory() async {
     final appState = context.read<AppState>();
+    final connectivity = context.read<ConnectivityService>();
     
     if (appState.selectedWarehouseId == null) {
       setState(() {
@@ -41,16 +46,42 @@ class _InventoryScreenState extends State<InventoryScreen> {
       _isLoading = true;
     });
 
-    final inventory = await appState.apiService.getWarehouseInventory(
-      appState.selectedWarehouseId!,
-    );
+    List<dynamic> inventory = [];
+    bool isOffline = false;
+
+    if (connectivity.isOnline) {
+      // Try to load from API
+      try {
+        inventory = await appState.apiService.getWarehouseInventory(
+          appState.selectedWarehouseId!,
+        );
+        // Cache for offline use
+        await OfflineDatabase.cacheInventory(appState.selectedWarehouseId!, inventory);
+      } catch (e) {
+        debugPrint('Error loading inventory from API: $e');
+        // Fall back to cached data
+        inventory = await _loadCachedInventory(appState.selectedWarehouseId!);
+        isOffline = true;
+      }
+    } else {
+      // Load from cache
+      inventory = await _loadCachedInventory(appState.selectedWarehouseId!);
+      isOffline = true;
+    }
 
     if (mounted) {
       setState(() {
         _inventory = inventory;
         _isLoading = false;
+        _isOfflineData = isOffline;
       });
     }
+  }
+
+  Future<List<dynamic>> _loadCachedInventory(int warehouseId) async {
+    // Load from SQLite cache
+    final cached = await OfflineDatabase.getCachedInventory(warehouseId);
+    return cached;
   }
 
   List<dynamic> get _filteredInventory {

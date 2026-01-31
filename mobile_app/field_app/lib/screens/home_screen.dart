@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/connectivity_service.dart';
+import '../services/sync_service.dart';
+import '../widgets/offline_widgets.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,15 +18,20 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
+          // Sync status indicator
+          const SyncStatusIndicator(),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () async {
-              await appState.loadData();
+              final success = await appState.refreshData();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Δεδομένα ανανεώθηκαν'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text(success 
+                      ? 'Δεδομένα ανανεώθηκαν' 
+                      : 'Offline - χρήση cached δεδομένων'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: success ? Colors.green : Colors.orange,
                   ),
                 );
               }
@@ -40,47 +48,72 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // User Info
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.blue.shade50,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue,
-                  child: Text(
-                    appState.currentUser?['full_name']?.substring(0, 1) ?? 'U',
-                    style: const TextStyle(color: Colors.white),
+      body: SyncProgressOverlay(
+        child: Column(
+          children: [
+            // Offline banner
+            const OfflineBanner(),
+            
+            // User Info
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: Colors.blue.shade50,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      appState.currentUser?['full_name']?.substring(0, 1) ?? 'U',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        appState.currentUser?['full_name'] ?? 'User',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appState.currentUser?['full_name'] ?? 'User',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      Text(
-                        appState.currentUser?['email'] ?? '',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12,
+                        Text(
+                          appState.currentUser?['email'] ?? '',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  // Pending items badge
+                  Consumer<SyncService>(
+                    builder: (context, sync, child) {
+                      if (sync.pendingCount == 0) return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${sync.pendingCount} pending',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // Project & Warehouse Selection
           if (appState.projects.isNotEmpty)
@@ -199,6 +232,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+      ),  // Close SyncProgressOverlay
     );
   }
 }

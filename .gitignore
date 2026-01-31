@@ -40,3 +40,6 @@ Thumbs.db
 # Database
 *.db
 *.sqlite
+test_phase2_offline.sh
+.gitignore
+test_phase1.sh

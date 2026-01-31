@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 class ConnectivityService with ChangeNotifier {
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<List<ConnectivityResult>>? _subscription;
+  StreamSubscription<ConnectivityResult>? _subscription;
   
   bool _isOnline = true;
   bool get isOnline => _isOnline;
@@ -19,20 +19,20 @@ class ConnectivityService with ChangeNotifier {
       final result = await _connectivity.checkConnectivity();
       _updateConnectionStatus(result);
     } catch (e) {
-      print('Connectivity check error: $e');
+      debugPrint('Connectivity check error: $e');
       _isOnline = false;
       notifyListeners();
     }
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
+  void _updateConnectionStatus(ConnectivityResult result) {
     final wasOnline = _isOnline;
     
-    // Check if any connection is available (not none)
-    _isOnline = results.any((result) => result != ConnectivityResult.none);
+    // Check if connection is available (not none)
+    _isOnline = result != ConnectivityResult.none;
     
     if (wasOnline != _isOnline) {
-      print('Connectivity changed: ${_isOnline ? "Online" : "Offline"}');
+      debugPrint('Connectivity changed: ${_isOnline ? "Online" : "Offline"}');
       notifyListeners();
     }
   }

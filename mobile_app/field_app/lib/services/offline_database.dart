@@ -85,6 +85,19 @@ class OfflineDatabase {
         synced INTEGER DEFAULT 0
       )
     ''');
+
+    // Cached inventory
+    await db.execute('''
+      CREATE TABLE cached_inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        warehouse_id INTEGER NOT NULL,
+        material_id INTEGER NOT NULL,
+        quantity INTEGER DEFAULT 0,
+        data TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(warehouse_id, material_id)
+      )
+    ''');
   }
 
   // === Pending Transactions ===
@@ -276,6 +289,47 @@ class OfflineDatabase {
     );
   }
 
+  // === Cached Inventory ===
+  
+  static Future<void> cacheInventory(int warehouseId, List<dynamic> inventory) async {
+    final db = await database;
+    
+    // First delete old inventory for this warehouse
+    await db.delete(
+      'cached_inventory',
+      where: 'warehouse_id = ?',
+      whereArgs: [warehouseId],
+    );
+    
+    // Insert new inventory
+    final batch = db.batch();
+    for (final item in inventory) {
+      batch.insert(
+        'cached_inventory',
+        {
+          'warehouse_id': warehouseId,
+          'material_id': item['material_id'] ?? item['material']?['id'],
+          'quantity': item['quantity'] ?? 0,
+          'data': jsonEncode(item),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    
+    await batch.commit(noResult: true);
+  }
+
+  static Future<List<Map<String, dynamic>>> getCachedInventory(int warehouseId) async {
+    final db = await database;
+    final results = await db.query(
+      'cached_inventory',
+      where: 'warehouse_id = ?',
+      whereArgs: [warehouseId],
+    );
+    return results.map((row) => jsonDecode(row['data'] as String) as Map<String, dynamic>).toList();
+  }
+
   // === Utility ===
   
   static Future<int> getPendingCount() async {
@@ -289,5 +343,6 @@ class OfflineDatabase {
     await db.delete('cached_materials');
     await db.delete('cached_warehouses');
     await db.delete('cached_projects');
+    await db.delete('cached_inventory');
   }
 }

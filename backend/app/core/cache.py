@@ -54,7 +54,7 @@ class CacheService:
             value = self.redis.get(self._generate_key(key))
             if value:
                 logger.debug(f"✓ Cache hit: {key}")
-                return json.loads(value)
+                return json.loads(value)  # type: ignore[arg-type]
             logger.debug(f"✗ Cache miss: {key}")
             return None
         except Exception as e:
@@ -96,9 +96,9 @@ class CacheService:
             return 0
         try:
             full_pattern = self._generate_key(pattern)
-            keys = self.redis.keys(full_pattern)
+            keys = self.redis.keys(full_pattern)  # type: ignore[union-attr]
             if keys:
-                count = self.redis.delete(*keys)
+                count: int = self.redis.delete(*keys)  # type: ignore[assignment]
                 logger.info(f"✓ Cache cleared {count} keys matching: {pattern}")
                 return count
             return 0
@@ -121,16 +121,18 @@ class CacheService:
         if not self.redis:
             return {"connected": False}
         try:
-            info = self.redis.info("stats")
-            keys = len(self.redis.keys(self._generate_key("*")))
+            info: dict = self.redis.info("stats")  # type: ignore[assignment]
+            keys_list: list = self.redis.keys(self._generate_key("*"))  # type: ignore[assignment]
+            keys_count = len(keys_list) if keys_list else 0
+            hits = info.get("keyspace_hits", 0)
+            misses = info.get("keyspace_misses", 0)
             return {
                 "connected": True,
-                "total_keys": keys,
-                "hits": info.get("keyspace_hits", 0),
-                "misses": info.get("keyspace_misses", 0),
+                "total_keys": keys_count,
+                "hits": hits,
+                "misses": misses,
                 "hit_rate": round(
-                    info.get("keyspace_hits", 0) / 
-                    max(info.get("keyspace_hits", 0) + info.get("keyspace_misses", 0), 1) * 100,
+                    hits / max(hits + misses, 1) * 100,
                     2
                 )
             }
@@ -220,7 +222,7 @@ class CacheKeys:
     """Centralized cache key generators"""
     
     @staticmethod
-    def materials_list(page: int = 1, category: str = None) -> str:
+    def materials_list(page: int = 1, category: Optional[str] = None) -> str:
         return f"materials:list:{page}:{category or 'all'}"
     
     @staticmethod

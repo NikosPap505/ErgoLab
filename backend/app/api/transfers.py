@@ -15,6 +15,35 @@ from app.schemas.transfer import TransferCreate, TransferResponse
 router = APIRouter(prefix="/api/transfers", tags=["Transfers"])
 
 
+@router.get("/", response_model=List[TransferResponse])
+def list_transfers(
+    skip: int = 0,
+    limit: int = 100,
+    status: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """List all transfers"""
+    query = db.query(Transfer)
+    
+    if status:
+        query = query.filter(Transfer.status == status)
+    
+    transfers = query.order_by(Transfer.created_at.desc()).offset(skip).limit(limit).all()
+    return transfers
+
+
+@router.get("/{transfer_id}", response_model=TransferResponse)
+def get_transfer(
+    transfer_id: int,
+    db: Session = Depends(get_db),
+):
+    """Get a single transfer by ID"""
+    transfer = db.query(Transfer).filter(Transfer.id == transfer_id).first()
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+    return transfer
+
+
 @router.post("/", response_model=TransferResponse, status_code=status.HTTP_201_CREATED)
 def create_transfer(
     payload: TransferCreate,
