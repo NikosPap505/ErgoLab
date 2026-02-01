@@ -40,4 +40,4 @@ pillow==11.1.0
 websockets==14.1
 
 # Performance Monitoring
-psutil==5.9.8
+psutil==6.1.1

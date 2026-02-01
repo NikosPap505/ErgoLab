@@ -113,7 +113,7 @@ const DocumentAnnotate = () => {
           console.log('Annotations loaded and rendered');
         }
       }
-    } catch (_error) {
+    } catch (error) {
       console.log('Error loading annotations:', error);
     }
   }, [documentId, pageNumber]);
@@ -333,7 +333,7 @@ const DocumentAnnotate = () => {
       });
 
       showNotification('Οι σημειώσεις αποθηκεύτηκαν!');
-    } catch (_error) {
+    } catch (error) {
       console.error('Save error:', error);
       showNotification('Σφάλμα αποθήκευσης', 'error');
     } finally {

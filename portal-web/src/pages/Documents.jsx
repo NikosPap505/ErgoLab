@@ -96,7 +96,7 @@ const Documents = () => {
       setUploadModal(false);
       setUploadData({ title: '', description: '', files: [] });
       loadDocuments();
-    } catch (_error) {
+    } catch (error) {
       showNotification(error.response?.data?.detail || 'Σφάλμα μεταφόρτωσης', 'error');
     }
   };

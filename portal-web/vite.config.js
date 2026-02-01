@@ -11,7 +11,7 @@ export default defineConfig({
   // Set base path for GitHub Pages deployment
   // For repo at github.com/username/ErgoLab, use '/ErgoLab/'
   // For custom domain or root deployment, use '/'
-  base: process.env.GITHUB_PAGES ? '/ErgoLab/' : '/',
+  base: typeof process !== 'undefined' && process.env.GITHUB_PAGES ? '/ErgoLab/' : '/',
   plugins: [react()],
   server: {
     port: 3000,

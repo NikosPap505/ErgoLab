@@ -80,7 +80,7 @@ const Materials = () => {
       
       handleCloseModal();
       loadMaterials();
-    } catch (_error) {
+    } catch (error) {
       showNotification(error.response?.data?.detail || 'Σφάλμα αποθήκευσης', 'error');
     }
   };
