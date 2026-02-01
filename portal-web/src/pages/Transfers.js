@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../components/Notification';
 import api from '../services/api';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Transfers = () => {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useNotification();
   
   const [transfers, setTransfers] = useState([]);
@@ -42,11 +44,11 @@ const Transfers = () => {
       setWarehouses(warehousesRes.data);
       setMaterials(materialsRes.data.items || materialsRes.data);
     } catch (error) {
-      showError('Failed to load transfers');
+      showError(t('transfers.messages.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [showError, t]);
 
   useEffect(() => {
     fetchData();
@@ -56,7 +58,7 @@ const Transfers = () => {
     e.preventDefault();
     try {
       await api.post('/api/transfers/', formData);
-      showSuccess('Transfer initiated successfully');
+      showSuccess(t('transfers.messages.createSuccess'));
       setIsModalOpen(false);
       setFormData({
         from_warehouse_id: '',
@@ -67,17 +69,17 @@ const Transfers = () => {
       });
       fetchData();
     } catch (error) {
-      showError(error.response?.data?.detail || 'Failed to create transfer');
+      showError(error.response?.data?.detail || t('transfers.messages.createError'));
     }
   };
 
   const handleStatusUpdate = async (transferId, newStatus) => {
     try {
       await api.patch(`/api/transfers/${transferId}`, { status: newStatus });
-      showSuccess(`Transfer ${newStatus}`);
+      showSuccess(t('transfers.messages.updateSuccess'));
       fetchData();
     } catch (error) {
-      showError('Failed to update transfer');
+      showError(t('transfers.messages.updateError'));
     }
   };
 
@@ -101,7 +103,7 @@ const Transfers = () => {
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.pending}`}>
-        {status?.replace('_', ' ')}
+        {t(`transfers.status.${status}`)}
       </span>
     );
   };
@@ -124,15 +126,15 @@ const Transfers = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transfers</h1>
-          <p className="text-gray-500">Manage stock transfers between warehouses</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('transfers.title')}</h1>
+          <p className="text-gray-500">{t('transfers.subtitle')}</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
-          New Transfer
+          {t('transfers.createNew')}
         </button>
       </div>
 
@@ -142,7 +144,7 @@ const Transfers = () => {
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search transfers..."
+            placeholder={t('transfers.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -153,21 +155,21 @@ const Transfers = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="in_transit">In Transit</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="all">{t('transfers.allStatus')}</option>
+          <option value="pending">{t('transfers.status.pending')}</option>
+          <option value="in_transit">{t('transfers.status.in_transit')}</option>
+          <option value="completed">{t('transfers.status.completed')}</option>
+          <option value="cancelled">{t('transfers.status.cancelled')}</option>
         </select>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Transfers', value: transfers.length, icon: ArrowsRightLeftIcon, color: 'blue' },
-          { label: 'Pending', value: transfers.filter(t => t.status === 'pending').length, icon: ClockIcon, color: 'yellow' },
-          { label: 'In Transit', value: transfers.filter(t => t.status === 'in_transit').length, icon: TruckIcon, color: 'purple' },
-          { label: 'Completed', value: transfers.filter(t => t.status === 'completed').length, icon: CheckIcon, color: 'green' }
+          { label: t('transfers.stats.total'), value: transfers.length, icon: ArrowsRightLeftIcon, color: 'blue' },
+          { label: t('transfers.stats.pending'), value: transfers.filter(transfer => transfer.status === 'pending').length, icon: ClockIcon, color: 'yellow' },
+          { label: t('transfers.stats.inTransit'), value: transfers.filter(transfer => transfer.status === 'in_transit').length, icon: TruckIcon, color: 'purple' },
+          { label: t('transfers.stats.completed'), value: transfers.filter(transfer => transfer.status === 'completed').length, icon: CheckIcon, color: 'green' }
         ].map((stat, idx) => (
           <div key={idx} className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center">
@@ -188,20 +190,20 @@ const Transfers = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Material</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.material')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.from')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.to')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.quantity')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.status')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('transfers.table.date')}</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('transfers.table.actions')}</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredTransfers.length === 0 ? (
               <tr>
                 <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
-                  No transfers found
+                  {t('transfers.noTransfersFound')}
                 </td>
               </tr>
             ) : (
@@ -228,14 +230,14 @@ const Transfers = () => {
                         <button
                           onClick={() => handleStatusUpdate(transfer.id, 'in_transit')}
                           className="text-blue-600 hover:text-blue-800"
-                          title="Mark as In Transit"
+                          title={t('transfers.actions.markInTransit')}
                         >
                           <TruckIcon className="h-5 w-5 inline" />
                         </button>
                         <button
                           onClick={() => handleStatusUpdate(transfer.id, 'cancelled')}
                           className="text-red-600 hover:text-red-800"
-                          title="Cancel"
+                          title={t('transfers.actions.cancel')}
                         >
                           <XMarkIcon className="h-5 w-5 inline" />
                         </button>
@@ -245,7 +247,7 @@ const Transfers = () => {
                       <button
                         onClick={() => handleStatusUpdate(transfer.id, 'completed')}
                         className="text-green-600 hover:text-green-800"
-                        title="Mark as Completed"
+                        title={t('transfers.actions.markCompleted')}
                       >
                         <CheckIcon className="h-5 w-5 inline" />
                       </button>
@@ -263,7 +265,7 @@ const Transfers = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">New Transfer</h2>
+              <h2 className="text-xl font-bold">{t('transfers.form.title')}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-gray-700">
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -271,14 +273,14 @@ const Transfers = () => {
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From Warehouse</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('transfers.form.fromWarehouse')}</label>
                 <select
                   value={formData.from_warehouse_id}
                   onChange={(e) => setFormData({ ...formData, from_warehouse_id: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   required
                 >
-                  <option value="">Select source warehouse</option>
+                  <option value="">{t('transfers.form.selectSourceWarehouse')}</option>
                   {warehouses.map(w => (
                     <option key={w.id} value={w.id}>{w.name}</option>
                   ))}
@@ -286,14 +288,14 @@ const Transfers = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To Warehouse</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('transfers.form.toWarehouse')}</label>
                 <select
                   value={formData.to_warehouse_id}
                   onChange={(e) => setFormData({ ...formData, to_warehouse_id: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   required
                 >
-                  <option value="">Select destination warehouse</option>
+                  <option value="">{t('transfers.form.selectDestinationWarehouse')}</option>
                   {warehouses
                     .filter(w => w.id !== parseInt(formData.from_warehouse_id))
                     .map(w => (
@@ -303,14 +305,14 @@ const Transfers = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('transfers.form.material')}</label>
                 <select
                   value={formData.material_id}
                   onChange={(e) => setFormData({ ...formData, material_id: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   required
                 >
-                  <option value="">Select material</option>
+                  <option value="">{t('transfers.form.selectMaterial')}</option>
                   {materials.map(m => (
                     <option key={m.id} value={m.id}>{m.name} ({m.sku})</option>
                   ))}
@@ -318,7 +320,7 @@ const Transfers = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('transfers.form.quantity')}</label>
                 <input
                   type="number"
                   min="1"
@@ -330,7 +332,7 @@ const Transfers = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('transfers.form.notes')}</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -345,13 +347,13 @@ const Transfers = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
-                  Create Transfer
+                  {t('transfers.form.createTransfer')}
                 </button>
               </div>
             </form>

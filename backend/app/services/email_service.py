@@ -52,7 +52,10 @@ class EmailService:
         """Send email using HTML template or plain HTML body."""
         
         if not settings.smtp_configured or fast_mail is None:
-            logger.warning(f"Email not sent (SMTP not configured): {subject} to {recipients}")
+            logger.warning(
+                f"Email not sent (SMTP not configured): subject='{subject}', "
+                f"recipient_count={len(recipients)}"
+            )
             return
         
         try:

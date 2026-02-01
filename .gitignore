@@ -26,7 +26,12 @@ secrets/
 *.old
 *.orig
 *.dump
-*.sql
+*.sql.gz
+*.sql.bak
+*.dump.sql
+*-backup.sql
+backups/
+dumps/
 
 # Configuration files with credentials (exclude examples)
 config.local.*
@@ -187,9 +192,17 @@ pids/
 # ===================================
 # PROJECT SPECIFIC - Exclude from GitHub
 # ===================================
-# Documentation files
-*.md
-!README.md
+# Documentation files - only generated or temporary docs
+# *.md - Too broad, commented out to allow project documentation
+docs/generated/
+docs/temp/
+*.generated.md
+*-generated.md
+NOTES.md
+TODO.md
+SCRATCH.md
 
-# Shell scripts
-*.sh
+# Local or generated shell scripts only
+scripts/local/*.sh
+*.local.sh
+*-local.sh

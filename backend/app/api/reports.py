@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -33,9 +33,27 @@ def get_reports(
     - transfers: Material transfers
     """
     
-    # Parse dates if provided
-    start_dt = datetime.fromisoformat(start_date) if start_date else None
-    end_dt = datetime.fromisoformat(end_date) if end_date else None
+    # Parse dates if provided with error handling
+    start_dt = None
+    end_dt = None
+    
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid start_date format: '{start_date}'. Expected ISO format (YYYY-MM-DD)."
+            )
+    
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid end_date format: '{end_date}'. Expected ISO format (YYYY-MM-DD)."
+            )
     
     # If no specific type, return list of saved reports
     if not type:
@@ -74,7 +92,10 @@ def get_reports(
     elif type == "transfers":
         return _generate_transfers_report(db, start_dt, end_dt, project_id)
     else:
-        return {"error": f"Unknown report type: {type}", "available_types": ["inventory", "consumables", "transfers"]}
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown report type: '{type}'. Available types: inventory, consumables, transfers"
+        )
 
 
 def _generate_inventory_report(db: Session, start_date, end_date, project_id):
@@ -98,6 +119,12 @@ def _generate_inventory_report(db: Session, start_date, end_date, project_id):
     ).join(
         Warehouse, InventoryStock.warehouse_id == Warehouse.id
     )
+    
+    # Apply date filters on InventoryStock.last_updated
+    if start_date:
+        query = query.filter(InventoryStock.last_updated >= start_date)
+    if end_date:
+        query = query.filter(InventoryStock.last_updated <= end_date)
     
     if project_id:
         query = query.filter(Warehouse.project_id == project_id)
@@ -210,7 +237,12 @@ def _generate_transfers_report(db: Session, start_date, end_date, project_id):
     if project_id:
         query = query.filter(Warehouse.project_id == project_id)
     
-    transfers = query.order_by(Transfer.created_at.desc()).all()
+    # Get total count before applying limit
+    total_count = query.count()
+    
+    # Apply limit to prevent unbounded result sets
+    limit = 50
+    transfers = query.order_by(Transfer.created_at.desc()).limit(limit).all()
     
     return {
         "type": "transfers",
@@ -233,7 +265,10 @@ def _generate_transfers_report(db: Session, start_date, end_date, project_id):
             for t in transfers
         ],
         "summary": {
-            "total_transfers": len(transfers),
+            "total_transfers": total_count,
+            "returned_count": len(transfers),
+            "truncated": total_count > limit,
+            "limit": limit,
         }
     }
 

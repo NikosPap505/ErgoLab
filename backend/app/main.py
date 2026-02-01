@@ -53,7 +53,7 @@ def _ensure_s3_bucket_sync():
 
 async def ensure_s3_bucket():
     """Async wrapper for S3 bucket check - non-blocking startup."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     with ThreadPoolExecutor(max_workers=1) as executor:
         try:
             # Run S3 check in thread pool to avoid blocking startup

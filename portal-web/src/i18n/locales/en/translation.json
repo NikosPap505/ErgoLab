@@ -362,5 +362,58 @@
       "percentOfTotal": "% of Total"
     },
     "trendFromLastPeriod": "{{value}}% from last period"
+  },
+  "transfers": {
+    "title": "Transfers",
+    "subtitle": "Manage stock transfers between warehouses",
+    "createNew": "New Transfer",
+    "searchPlaceholder": "Search transfers...",
+    "noTransfersFound": "No transfers found",
+    "allStatus": "All Status",
+    "stats": {
+      "total": "Total Transfers",
+      "pending": "Pending",
+      "inTransit": "In Transit",
+      "completed": "Completed"
+    },
+    "table": {
+      "material": "Material",
+      "from": "From",
+      "to": "To",
+      "quantity": "Quantity",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "Pending",
+      "in_transit": "In Transit",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "form": {
+      "title": "New Transfer",
+      "fromWarehouse": "From Warehouse",
+      "toWarehouse": "To Warehouse",
+      "material": "Material",
+      "quantity": "Quantity",
+      "notes": "Notes (Optional)",
+      "selectSourceWarehouse": "Select source warehouse",
+      "selectDestinationWarehouse": "Select destination warehouse",
+      "selectMaterial": "Select material",
+      "createTransfer": "Create Transfer"
+    },
+    "actions": {
+      "markInTransit": "Mark as In Transit",
+      "markCompleted": "Mark as Completed",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "loadError": "Failed to load transfers",
+      "createSuccess": "Transfer initiated successfully",
+      "createError": "Failed to create transfer",
+      "updateSuccess": "Transfer updated",
+      "updateError": "Failed to update transfer"
+    }
   }
 }

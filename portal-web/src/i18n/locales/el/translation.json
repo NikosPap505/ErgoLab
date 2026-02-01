@@ -362,5 +362,58 @@
       "percentOfTotal": "% του Συνόλου"
     },
     "trendFromLastPeriod": "{{value}}% από την προηγούμενη περίοδο"
+  },
+  "transfers": {
+    "title": "Μεταφορές",
+    "subtitle": "Διαχείριση μεταφορών αποθέματος μεταξύ αποθηκών",
+    "createNew": "Νέα Μεταφορά",
+    "searchPlaceholder": "Αναζήτηση μεταφορών...",
+    "noTransfersFound": "Δεν βρέθηκαν μεταφορές",
+    "allStatus": "Όλες οι Καταστάσεις",
+    "stats": {
+      "total": "Συνολικές Μεταφορές",
+      "pending": "Σε Εκκρεμότητα",
+      "inTransit": "Σε Μεταφορά",
+      "completed": "Ολοκληρωμένες"
+    },
+    "table": {
+      "material": "Υλικό",
+      "from": "Από",
+      "to": "Προς",
+      "quantity": "Ποσότητα",
+      "status": "Κατάσταση",
+      "date": "Ημερομηνία",
+      "actions": "Ενέργειες"
+    },
+    "status": {
+      "pending": "Σε Εκκρεμότητα",
+      "in_transit": "Σε Μεταφορά",
+      "completed": "Ολοκληρωμένη",
+      "cancelled": "Ακυρωμένη"
+    },
+    "form": {
+      "title": "Νέα Μεταφορά",
+      "fromWarehouse": "Από Αποθήκη",
+      "toWarehouse": "Προς Αποθήκη",
+      "material": "Υλικό",
+      "quantity": "Ποσότητα",
+      "notes": "Σημειώσεις (Προαιρετικά)",
+      "selectSourceWarehouse": "Επιλέξτε αποθήκη αποστολής",
+      "selectDestinationWarehouse": "Επιλέξτε αποθήκη προορισμού",
+      "selectMaterial": "Επιλέξτε υλικό",
+      "createTransfer": "Δημιουργία Μεταφοράς"
+    },
+    "actions": {
+      "markInTransit": "Σήμανση ως Σε Μεταφορά",
+      "markCompleted": "Σήμανση ως Ολοκληρωμένη",
+      "cancel": "Ακύρωση"
+    },
+    "messages": {
+      "loadError": "Αποτυχία φόρτωσης μεταφορών",
+      "createSuccess": "Η μεταφορά ξεκίνησε επιτυχώς",
+      "createError": "Αποτυχία δημιουργίας μεταφοράς",
+      "updateSuccess": "Η μεταφορά ενημερώθηκε",
+      "updateError": "Αποτυχία ενημέρωσης μεταφοράς"
+    }
   }
 }
