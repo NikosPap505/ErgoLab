@@ -16,21 +16,28 @@ template_loader = jinja2.FileSystemLoader(
 )
 template_env = jinja2.Environment(loader=template_loader, autoescape=True)
 
-email_conf = ConnectionConfig(
-    MAIL_USERNAME=settings.SMTP_USER,
-    MAIL_PASSWORD=settings.SMTP_PASSWORD,
-    MAIL_FROM=settings.SMTP_FROM_EMAIL,
-    MAIL_PORT=settings.SMTP_PORT,
-    MAIL_SERVER=settings.SMTP_HOST,
-    MAIL_FROM_NAME=settings.SMTP_FROM_NAME,
-    MAIL_STARTTLS=settings.SMTP_TLS,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates" / "email",
-)
+# Only initialize email configuration if SMTP is properly configured
+email_conf = None
+fast_mail = None
 
-fast_mail = FastMail(email_conf)
+if settings.smtp_configured:
+    email_conf = ConnectionConfig(
+        MAIL_USERNAME=settings.SMTP_USER or "",
+        MAIL_PASSWORD=settings.SMTP_PASSWORD or "",
+        MAIL_FROM=settings.SMTP_FROM_EMAIL,
+        MAIL_PORT=settings.SMTP_PORT,
+        MAIL_SERVER=settings.SMTP_HOST or "",
+        MAIL_FROM_NAME=settings.SMTP_FROM_NAME,
+        MAIL_STARTTLS=settings.SMTP_TLS,
+        MAIL_SSL_TLS=False,
+        USE_CREDENTIALS=True,
+        VALIDATE_CERTS=True,
+        TEMPLATE_FOLDER=Path(__file__).parent.parent / "templates" / "email",
+    )
+    fast_mail = FastMail(email_conf)
+    logger.info("✓ Email service configured")
+else:
+    logger.warning("⚠ Email service not configured - SMTP credentials missing")
 
 
 class EmailService:
@@ -43,6 +50,11 @@ class EmailService:
         template_data: Optional[dict] = None,
     ) -> None:
         """Send email using HTML template or plain HTML body."""
+        
+        if not settings.smtp_configured or fast_mail is None:
+            logger.warning(f"Email not sent (SMTP not configured): {subject} to {recipients}")
+            return
+        
         try:
             if template_name and template_data:
                 template = template_env.get_template(f"{template_name}.html")

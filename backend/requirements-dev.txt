@@ -8,3 +8,6 @@ safety==3.2.4
 flake8==7.1.1
 black==24.10.0
 mypy==1.14.1
+
+# Load Testing
+locust==2.24.0

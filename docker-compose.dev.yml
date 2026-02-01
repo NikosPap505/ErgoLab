@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   postgres:
@@ -78,12 +78,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      REACT_APP_API_URL: http://localhost:8000
-      WATCHPACK_POLLING: "true"
+      VITE_API_URL: http://localhost:8000
     volumes:
       - ./portal-web:/app
       - /app/node_modules
-    command: sh -c "npm install && npm start"
+    command: sh -c "npm install && npm run dev"
     depends_on:
       - backend
     networks:

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -61,7 +61,7 @@ def create_transfer(
         raise HTTPException(status_code=404, detail="To warehouse not found")
 
     count = db.query(Transfer).count()
-    transfer_number = f"TR-{datetime.utcnow().year}-{count + 1:05d}"
+    transfer_number = f"TR-{datetime.now(timezone.utc).year}-{count + 1:05d}"
 
     transfer = Transfer(
         transfer_number=transfer_number,
@@ -151,7 +151,7 @@ def complete_transfer(
         )
 
     transfer.status = TransferStatus.COMPLETED
-    transfer.received_at = datetime.utcnow()
+    transfer.received_at = datetime.now(timezone.utc)
 
     db.commit()
     return {"message": "Transfer completed successfully"}

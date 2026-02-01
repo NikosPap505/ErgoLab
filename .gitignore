@@ -1,4 +1,43 @@
-# Python
+# ===================================
+# SECURITY - Sensitive Files
+# ===================================
+# Environment variables with credentials
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+
+# Secrets, keys, certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+secrets/
+.secrets/
+
+# Backup files that may contain sensitive data
+*.backup
+*.bak
+*.old
+*.orig
+*.dump
+*.sql
+
+# Configuration files with credentials (exclude examples)
+config.local.*
+*-config.local.*
+!*.example
+!*.sample
+!*.template
+
+# ===================================
+# PYTHON
+# ===================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -6,40 +45,151 @@ __pycache__/
 .Python
 venv/
 env/
-*.env
-.env.local
-
-# Node
-node_modules/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
 build/
+*.egg
+
+# ===================================
+# NODE / JavaScript
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .npm
 .eslintcache
+.yarn/
+.pnp.*
 
-# Flutter
+# Build outputs
+build/
+dist/
+out/
+.next/
+.nuxt/
+
+# ===================================
+# FLUTTER / DART
+# ===================================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-build/
 *.apk
 *.aab
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
 
-# IDEs
+# ===================================
+# DATABASES
+# ===================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# PostgreSQL
+*.psql
+pg_data/
+postgres_data/
+
+# ===================================
+# DOCKER
+# ===================================
+*.log
+docker-compose.override.yml
+
+# ===================================
+# IDEs & Editors
+# ===================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.history/
 
-# OS
+# ===================================
+# OS SPECIFIC
+# ===================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
-# Docker
+# ===================================
+# TESTING & COVERAGE
+# ===================================
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage/
+*.cover
+.hypothesis/
+
+# ===================================
+# TEMPORARY FILES
+# ===================================
+tmp/
+temp/
+*.tmp
+.cache/
+.parcel-cache/
+
+# ===================================
+# LOGS
+# ===================================
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# Database
-*.db
-*.sqlite
-test_phase2_offline.sh
-.gitignore
-test_phase1.sh
+# ===================================
+# CLOUD & DEPLOYMENT
+# ===================================
+.terraform/
+*.tfstate
+*.tfstate.*
+.serverless/
+.vercel
+.netlify/
+
+# ===================================
+# MISC
+# ===================================
+.localstorage
+
+# ===================================
+# PROJECT SPECIFIC - Exclude from GitHub
+# ===================================
+# Documentation files
+*.md
+!README.md
+
+# Shell scripts
+*.sh

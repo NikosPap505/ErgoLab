@@ -7,7 +7,7 @@ budget management, and alerts.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_, case
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import List, Optional
 
 from app.core.database import get_db
@@ -93,7 +93,7 @@ async def get_dashboard_stats(
     budget_utilization = (total_spent / total_budget * 100) if total_budget > 0 else 0
     
     # Top consuming materials (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     top_materials = (
         db.query(
             Material.id,
@@ -292,7 +292,7 @@ async def get_project_profitability(
     # Calculate days active
     days_active = 0
     if project.start_date:
-        end_date = project.end_date or datetime.utcnow()
+        end_date = project.end_date or datetime.now(timezone.utc)
         if hasattr(end_date, 'date'):
             end_date = end_date.date() if hasattr(end_date, 'date') else end_date
         if hasattr(project.start_date, 'date'):
@@ -353,7 +353,7 @@ async def _calculate_project_cost_summary(db: Session, project: Project) -> Proj
     days_active = 0
     cost_per_day = None
     if project.start_date:
-        end_date = project.end_date or datetime.utcnow()
+        end_date = project.end_date or datetime.now(timezone.utc)
         if hasattr(end_date, 'date'):
             end_date = end_date.date()
         if hasattr(project.start_date, 'date'):
@@ -389,8 +389,8 @@ async def get_material_consumption_trends(
 ):
     """Get material consumption trends for the specified period"""
     
-    period_start = datetime.utcnow().date() - timedelta(days=period_days)
-    period_end = datetime.utcnow().date()
+    period_start = datetime.now(timezone.utc).date() - timedelta(days=period_days)
+    period_end = datetime.now(timezone.utc).date()
     
     # Get consumption data grouped by material
     consumption = (
@@ -460,7 +460,7 @@ async def get_material_usage_history(
     if not material:
         raise HTTPException(status_code=404, detail="Material not found")
     
-    period_start = datetime.utcnow() - timedelta(days=period_days)
+    period_start = datetime.now(timezone.utc) - timedelta(days=period_days)
     
     # Get daily consumption
     daily_usage = (
@@ -725,7 +725,7 @@ async def resolve_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
     
     alert.is_resolved = 1
-    alert.resolved_at = datetime.utcnow()
+    alert.resolved_at = datetime.now(timezone.utc)
     alert.resolved_by = current_user.id
     db.commit()
     
@@ -743,7 +743,7 @@ async def get_spending_trends(
 ):
     """Get spending trends over time"""
     
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     if period == "daily":
         date_trunc = func.date(StockTransaction.created_at)

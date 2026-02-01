@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 import boto3
 from botocore.exceptions import ClientError
@@ -24,8 +26,8 @@ from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, metrics, get_health_status
 
 
-def ensure_s3_bucket():
-    """Ensure the S3 bucket exists on startup."""
+def _ensure_s3_bucket_sync():
+    """Synchronous S3 bucket check/creation - runs in thread pool."""
     s3_client = boto3.client(
         "s3",
         endpoint_url=settings.S3_ENDPOINT,
@@ -34,19 +36,41 @@ def ensure_s3_bucket():
     )
     try:
         s3_client.head_bucket(Bucket=settings.S3_BUCKET)
-        print(f"S3 bucket '{settings.S3_BUCKET}' exists")
-    except ClientError:
+        print(f"✓ S3 bucket '{settings.S3_BUCKET}' exists")
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == '404':
+            try:
+                s3_client.create_bucket(Bucket=settings.S3_BUCKET)
+                print(f"✓ S3 bucket '{settings.S3_BUCKET}' created")
+            except Exception as create_error:
+                print(f"⚠ Warning: Could not create S3 bucket: {create_error}")
+        else:
+            print(f"⚠ Warning: S3 bucket check failed: {e}")
+    except Exception as e:
+        print(f"⚠ Warning: Could not connect to S3: {e}")
+
+
+async def ensure_s3_bucket():
+    """Async wrapper for S3 bucket check - non-blocking startup."""
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor(max_workers=1) as executor:
         try:
-            s3_client.create_bucket(Bucket=settings.S3_BUCKET)
-            print(f"S3 bucket '{settings.S3_BUCKET}' created")
+            # Run S3 check in thread pool to avoid blocking startup
+            await asyncio.wait_for(
+                loop.run_in_executor(executor, _ensure_s3_bucket_sync),
+                timeout=5.0  # 5 second timeout to prevent hanging
+            )
+        except asyncio.TimeoutError:
+            print("⚠ Warning: S3 bucket check timed out after 5 seconds")
         except Exception as e:
-            print(f"Warning: Could not create S3 bucket: {e}")
+            print(f"⚠ Warning: S3 bucket check failed: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    ensure_s3_bucket()
+    # Startup - non-blocking S3 initialization
+    await ensure_s3_bucket()
     print("✓ ErgoLab API started with performance monitoring")
     yield
     # Shutdown

@@ -2,40 +2,36 @@
   "name": "ergolab-portal",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",
-    "autoprefixer": "^10.4.16",
     "axios": "^1.6.5",
     "fabric": "^7.1.0",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^7.2.2",
     "i18next-http-backend": "^2.7.3",
-    "postcss": "^8.4.33",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.4.0",
     "react-i18next": "^14.1.3",
     "react-intersection-observer": "^9.8.0",
     "react-pdf": "^10.3.0",
-    "react-router-dom": "^6.21.0",
-    "react-scripts": "5.0.1",
-    "tailwindcss": "^3.4.1"
+    "react-router-dom": "^6.21.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "analyze": "source-map-explorer 'build/static/js/*.js'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "analyze": "vite-bundle-visualizer"
   },
   "devDependencies": {
-    "source-map-explorer": "^2.5.3"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.4.11",
+    "vite-bundle-visualizer": "^1.2.1"
   },
   "browserslist": {
     "production": [

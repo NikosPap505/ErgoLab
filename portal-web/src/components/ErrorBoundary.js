@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
               Παρουσιάστηκε ένα απρόσμενο σφάλμα. Παρακαλούμε ανανεώστε τη σελίδα.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.MODE === 'development' && this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 mb-2">
                   Λεπτομέρειες σφάλματος (dev only)

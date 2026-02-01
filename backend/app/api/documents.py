@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 import logging
 
@@ -56,7 +56,7 @@ async def upload_document(
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     s3_key = f"projects/{project_id}/documents/{timestamp}_{file.filename}"
     thumbnail_key = None
 

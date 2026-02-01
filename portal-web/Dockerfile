@@ -18,7 +18,8 @@ COPY . .
 ENV PORT=3000
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Vite dev server
+CMD ["npm", "run", "dev"]
 
 # Build stage
 FROM base AS builder
