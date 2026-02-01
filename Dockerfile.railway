@@ -19,5 +19,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy entire backend directory
 COPY backend/ .
 
+# Create startup script
+RUN echo '#!/bin/sh\n\
+set -e\n\
+echo "Running migrations..."\n\
+alembic upgrade head\n\
+echo "Starting server..."\n\
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}' > /start.sh && \
+    chmod +x /start.sh
+
 # Run migrations and start server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["/start.sh"]
