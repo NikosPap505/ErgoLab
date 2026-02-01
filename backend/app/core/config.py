@@ -11,15 +11,15 @@ class Settings(BaseSettings):
     # Redis - Default for containerized environment
     REDIS_URL: str = "redis://redis:6379/0"
     
-    # S3/MinIO - Required for production
-    S3_ENDPOINT: str
+    # S3/MinIO - Optional with defaults for testing/CI
+    S3_ENDPOINT: str = "http://minio:9000"
     S3_PUBLIC_ENDPOINT: str = "http://localhost:9000"  # Public URL for browser access
-    S3_ACCESS_KEY: str
-    S3_SECRET_KEY: str
+    S3_ACCESS_KEY: str = "minioadmin"
+    S3_SECRET_KEY: str = "minioadmin"
     S3_BUCKET: str = "ergolab-files"
     
-    # Security - Required for production
-    SECRET_KEY: str
+    # Security - Default for testing/CI (CHANGE IN PRODUCTION!)
+    SECRET_KEY: str = "dev-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
