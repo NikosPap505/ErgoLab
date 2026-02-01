@@ -24,6 +24,8 @@ RUN echo '#!/bin/sh\n\
 set -e\n\
 echo "Running migrations..."\n\
 alembic upgrade head\n\
+echo "Creating admin user..."\n\
+python scripts/create_admin.py\n\
 echo "Starting server on port ${PORT:-8000}..."\n\
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}' > /start.sh && \
     chmod +x /start.sh
