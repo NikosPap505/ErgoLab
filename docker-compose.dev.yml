@@ -83,6 +83,7 @@ services:
     volumes:
       - ./portal-web:/app
       - /app/node_modules
+    command: sh -c "npm install && npm start"
     depends_on:
       - backend
     networks:

@@ -23,7 +23,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.WORKER, nullable=False)
+    role = Column(Enum(UserRole, name="userrole", create_type=False, values_callable=lambda x: [e.value for e in x]), default=UserRole.WORKER, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     phone = Column(String)

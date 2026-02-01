@@ -119,11 +119,11 @@ def upgrade() -> None:
         sa.Column('status', sa.String(50), default='pending'),
         sa.Column('completion_percentage', sa.Float(), default=0.0),
         
-        # Assignment
-        sa.Column('assigned_to', sa.Text(), nullable=True),
+        # Assignment - Using String with max length for better performance than Text
+        sa.Column('assigned_to', sa.String(500), nullable=True),  # Comma-separated user IDs or names
         
-        # Dependencies
-        sa.Column('depends_on', sa.Text(), nullable=True),
+        # Dependencies - Using String with max length for better performance than Text
+        sa.Column('depends_on', sa.String(500), nullable=True),  # Comma-separated work item IDs,
         
         # Metadata
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),

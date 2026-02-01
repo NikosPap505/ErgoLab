@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../context/PermissionContext';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -10,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { refreshPermissions } = usePermissions();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -19,6 +21,8 @@ const Login = () => {
 
     try {
       await login(email, password);
+      // Refresh permissions after successful login
+      await refreshPermissions();
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.detail || t('auth.loginError'));

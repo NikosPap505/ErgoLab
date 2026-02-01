@@ -42,6 +42,8 @@ def upgrade():
                     ['warehouse_id', 'quantity'], if_not_exists=True)
     
     # Stock transactions indexes
+    # Note: Individual indexes on warehouse_id, material_id, and created_at allow queries on any single column
+    # Composite index allows efficient queries combining these columns in order (warehouse_id, material_id, created_at)
     op.create_index('idx_transactions_warehouse', 'stock_transactions', ['warehouse_id'], if_not_exists=True)
     op.create_index('idx_transactions_material', 'stock_transactions', ['material_id'], if_not_exists=True)
     op.create_index('idx_transactions_type', 'stock_transactions', ['transaction_type'], if_not_exists=True)

@@ -18,11 +18,13 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000"
 
     # SMTP settings
- # backend/app/core/config.py - Development settings
-    SMTP_HOST="smtp.ethereal.email"
-    SMTP_PORT=587
-    SMTP_USER="jenifer94@ethereal.email"
-    SMTP_PASSWORD="7DXryMNUZTqp7dVtXt"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_FROM_EMAIL: str = "noreply@ergolab.com"
+    SMTP_FROM_NAME: str = "ErgoLab"
 
 
     # Frontend URL for links

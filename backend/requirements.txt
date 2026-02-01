@@ -14,9 +14,9 @@ redis==5.2.1
 hiredis==3.1.0
 
 # Authentication & Security
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.3.0  # TODO: Consider upgrading to newer version or using python-jose-cryptodome
 passlib[bcrypt]==1.7.4
-bcrypt==3.2.2
+bcrypt==4.2.1  # Updated from 3.2.2 for security improvements
 python-dotenv==1.0.1
 
 # S3/MinIO
@@ -33,7 +33,7 @@ jinja2==3.1.3
 aiosmtplib==2.0.2
 
 # PDF Processing
-pypdf2==3.0.1
+pypdf==5.1.0  # Updated from pypdf2 (deprecated) to pypdf
 pillow==11.1.0
 
 # WebSockets for real-time

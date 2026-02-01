@@ -1,4 +1,3 @@
-import React from 'react';
 import { usePermissions } from '../context/PermissionContext';
 
 const PermissionGate = ({

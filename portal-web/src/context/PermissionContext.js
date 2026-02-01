@@ -13,12 +13,22 @@ export const PermissionProvider = ({ children }) => {
   }, []);
 
   const fetchPermissions = async () => {
+    // Check if user is authenticated before fetching permissions
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await api.get('/api/users/me/permissions');
       setPermissions(response.data.permissions || []);
       setUserRole(response.data.role || null);
     } catch (error) {
-      console.error('Error fetching permissions:', error);
+      // Only log error if it's not a 401 (unauthorized)
+      if (error.response?.status !== 401) {
+        console.error('Error fetching permissions:', error);
+      }
     } finally {
       setLoading(false);
     }

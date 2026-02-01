@@ -1,0 +1,77 @@
+stages:
+  - test
+  - build
+  - security
+
+variables:
+  POSTGRES_DB: test_ergolab
+  POSTGRES_USER: test_user
+  POSTGRES_PASSWORD: test_password
+  DATABASE_URL: postgresql://test_user:test_password@postgres:5432/test_ergolab
+  REDIS_URL: redis://redis:6379/0
+
+# Backend Tests
+backend-test:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - postgres:14-alpine
+    - redis:7-alpine
+  before_script:
+    - cd backend
+    - pip install -r requirements.txt -r requirements-dev.txt
+    - alembic upgrade head
+  script:
+    - pytest -v --cov=app --cov-report=xml --cov-report=term-missing
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+    paths:
+      - backend/htmlcov/
+
+# Frontend Tests
+frontend-test:
+  stage: test
+  image: node:18-alpine
+  before_script:
+    - cd portal-web
+    - npm ci
+  script:
+    - npm run lint
+    - npm test -- --coverage --watchAll=false
+    - npm run build
+  artifacts:
+    paths:
+      - portal-web/build/
+
+# Security Scan
+security-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - cd backend
+    - pip install bandit safety
+  script:
+    - bandit -r app/ -f json -o bandit-report.json
+    - safety check --json > safety-report.json
+  artifacts:
+    paths:
+      - backend/bandit-report.json
+      - backend/safety-report.json
+  allow_failure: true
+
+# Docker Build
+docker-build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t ergolab-backend:$CI_COMMIT_SHA ./backend
+    - docker build -t ergolab-frontend:$CI_COMMIT_SHA ./portal-web
+  only:
+    - main
+    - develop
