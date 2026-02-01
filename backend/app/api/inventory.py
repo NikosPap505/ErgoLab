@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
@@ -8,9 +8,11 @@ from app.core.database import get_db
 from app.core.cache import cache, CacheKeys
 from app.models.inventory import InventoryStock, StockTransaction, TransactionType
 from app.models.material import Material
-from app.models.user import User
+from app.models.notification import NotificationPreferences
+from app.models.user import User, UserRole
 from app.models.warehouse import Warehouse
 from app.schemas.inventory import InventoryStockResponse, StockTransactionCreate
+from app.services.email_service import EmailService
 
 router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
 
@@ -108,6 +110,7 @@ def get_low_stock_materials(db: Session = Depends(get_db)):
 @router.post("/transaction", status_code=status.HTTP_201_CREATED)
 def create_stock_transaction(
     transaction: StockTransactionCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -176,5 +179,35 @@ def create_stock_transaction(
     cache.delete(CacheKeys.inventory_low_stock())
     cache.clear_pattern("inventory:*")
     cache.clear_pattern("dashboard:*")
+
+    if stock.material and stock.quantity <= (stock.material.min_stock_level or 0):
+        admins = (
+            db.query(User)
+            .filter(User.role.in_([UserRole.ADMIN, UserRole.MANAGER]))
+            .all()
+        )
+
+        for admin in admins:
+            if not admin.email:
+                continue
+
+            prefs = (
+                db.query(NotificationPreferences)
+                .filter(NotificationPreferences.user_id == admin.id)
+                .first()
+            )
+
+            if prefs and not prefs.email_low_stock:
+                continue
+
+            background_tasks.add_task(
+                EmailService.send_low_stock_alert,
+                recipient=admin.email,
+                material_name=stock.material.name,
+                sku=stock.material.sku,
+                current_quantity=stock.quantity,
+                minimum_quantity=stock.material.min_stock_level or 0,
+                warehouse_name=stock.warehouse.name if stock.warehouse else "",
+            )
 
     return {"message": "Transaction completed", "new_quantity": stock.quantity}

@@ -1,21 +1,24 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: '📊' },
-  { name: 'Έργα', href: '/projects', icon: '🏗️' },
-  { name: 'Αποθήκες', href: '/warehouses', icon: '🏭' },
-  { name: 'Υλικά', href: '/materials', icon: '📦' },
-  { name: 'Μεταφορές', href: '/transfers', icon: '🚚' },
-  { name: 'Έγγραφα', href: '/documents', icon: '📄' },
-  { name: 'Αναφορές', href: '/reports', icon: '📈' },
-];
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const navigation = [
+    { name: t('nav.dashboard'), href: '/', icon: '📊' },
+    { name: t('nav.projects'), href: '/projects', icon: '🏗️' },
+    { name: t('nav.warehouses'), href: '/warehouses', icon: '🏭' },
+    { name: t('nav.materials'), href: '/materials', icon: '📦' },
+    { name: t('nav.transfers'), href: '/transfers', icon: '🚚' },
+    { name: t('nav.documents'), href: '/documents', icon: '📄' },
+    { name: t('nav.reports'), href: '/reports', icon: '📈' },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -53,7 +56,8 @@ const Layout = ({ children }) => {
               })}
             </nav>
           </div>
-          <div className="flex-shrink-0 flex border-t border-primary-700 p-4">
+          <div className="flex-shrink-0 flex flex-col gap-3 border-t border-primary-700 p-4">
+            <LanguageSwitcher />
             <div className="flex items-center w-full">
               <div className="flex-1">
                 <p className="text-sm font-medium text-white">{user?.full_name}</p>
@@ -62,6 +66,7 @@ const Layout = ({ children }) => {
               <button
                 onClick={handleLogout}
                 className="ml-3 text-primary-300 hover:text-white"
+                aria-label={t('auth.logout')}
               >
                 🚪
               </button>

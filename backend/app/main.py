@@ -12,6 +12,7 @@ from app.api import (
     documents,
     inventory,
     materials,
+    notifications,
     projects,
     reports,
     transfers,
@@ -79,6 +80,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(annotations.router)
 app.include_router(reports.router)
+app.include_router(notifications.router)
 app.include_router(users.router)
 app.include_router(analytics.router)
 app.include_router(reports_full.router, prefix="/api/reports", tags=["Reports System"])

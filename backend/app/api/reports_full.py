@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_, or_
 from app.core.database import get_db
 from app.api.auth import get_current_user
-from app.models.project import Project
+from app.models.project import Project, ProjectAssignment
+from app.models.user import User, UserRole
+from app.models.notification import NotificationPreferences
+from app.services.email_service import EmailService
 from app.models.material import Material
 from app.models.warehouse import Warehouse
 from app.models.inventory import StockTransaction
@@ -30,6 +33,7 @@ router = APIRouter()
 @router.post("/daily", response_model=DailyReportResponse)
 async def create_daily_report(
     report: DailyReportCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -60,6 +64,43 @@ async def create_daily_report(
     response = DailyReportResponse.model_validate(db_report)
     response.project_name = project.name if project else None
     
+    managers = (
+        db.query(User)
+        .join(ProjectAssignment, ProjectAssignment.user_id == User.id)
+        .filter(
+            ProjectAssignment.project_id == db_report.project_id,
+            User.role == UserRole.MANAGER,
+        )
+        .all()
+    )
+
+    if not managers:
+        managers = db.query(User).filter(User.role == UserRole.ADMIN).all()
+
+    for manager in managers:
+        if not manager.email:
+            continue
+
+        prefs = (
+            db.query(NotificationPreferences)
+            .filter(NotificationPreferences.user_id == manager.id)
+            .first()
+        )
+
+        if prefs and not prefs.email_daily_reports:
+            continue
+
+        background_tasks.add_task(
+            EmailService.send_daily_report_summary,
+            recipient=manager.email,
+            project_name=project.name if project else "",
+            report_date=db_report.report_date.strftime("%d/%m/%Y"),
+            workers_count=db_report.workers_count or 0,
+            progress_percentage=db_report.progress_percentage or 0.0,
+            issues_count=len(db_report.issues or []),
+            report_id=db_report.id,
+        )
+
     return response
 
 @router.get("/daily", response_model=List[DailyReportResponse])
@@ -160,6 +201,7 @@ async def delete_daily_report(
 @router.post("/issues", response_model=IssueResponse)
 async def create_issue(
     issue: IssueCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -177,6 +219,31 @@ async def create_issue(
     response = IssueResponse.model_validate(db_issue)
     response.project_name = project.name if project else None
     
+    if db_issue.assigned_to:
+        assigned_user = db.query(User).filter(User.id == db_issue.assigned_to).first()
+        if assigned_user and assigned_user.email and project:
+            prefs = (
+                db.query(NotificationPreferences)
+                .filter(NotificationPreferences.user_id == assigned_user.id)
+                .first()
+            )
+
+            if not prefs or prefs.email_issue_assigned:
+                severity_value = (
+                    db_issue.severity.value
+                    if hasattr(db_issue.severity, "value")
+                    else str(db_issue.severity)
+                )
+                background_tasks.add_task(
+                    EmailService.send_issue_assignment,
+                    recipient=assigned_user.email,
+                    issue_title=db_issue.title,
+                    project_name=project.name,
+                    severity=severity_value,
+                    assigned_by=current_user.full_name,
+                    issue_id=db_issue.id,
+                )
+
     return response
 
 @router.get("/issues", response_model=List[IssueResponse])
@@ -257,6 +324,54 @@ async def update_issue(
     response = IssueResponse.model_validate(db_issue)
     response.project_name = project.name if project else None
     
+    return response
+
+
+@router.put("/issues/{issue_id}/assign/{user_id}", response_model=IssueResponse)
+async def assign_issue(
+    issue_id: int,
+    user_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    """Assign issue to a user and notify them by email."""
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Δεν βρέθηκε πρόβλημα")
+
+    issue.assigned_to = user_id
+    db.commit()
+    db.refresh(issue)
+
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
+    response = IssueResponse.model_validate(issue)
+    response.project_name = project.name if project else None
+
+    assigned_user = db.query(User).filter(User.id == user_id).first()
+    if assigned_user and assigned_user.email and project:
+        prefs = (
+            db.query(NotificationPreferences)
+            .filter(NotificationPreferences.user_id == assigned_user.id)
+            .first()
+        )
+
+        if not prefs or prefs.email_issue_assigned:
+            severity_value = (
+                issue.severity.value
+                if hasattr(issue.severity, "value")
+                else str(issue.severity)
+            )
+            background_tasks.add_task(
+                EmailService.send_issue_assignment,
+                recipient=assigned_user.email,
+                issue_title=issue.title,
+                project_name=project.name,
+                severity=severity_value,
+                assigned_by=current_user.full_name,
+                issue_id=issue.id,
+            )
+
     return response
 
 @router.delete("/issues/{issue_id}")

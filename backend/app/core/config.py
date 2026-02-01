@@ -1,4 +1,5 @@
 from typing import List
+from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
@@ -16,6 +17,17 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # SMTP settings
+ # backend/app/core/config.py - Development settings
+    SMTP_HOST="smtp.ethereal.email"
+    SMTP_PORT=587
+    SMTP_USER="jenifer94@ethereal.email"
+    SMTP_PASSWORD="7DXryMNUZTqp7dVtXt"
+
+
+    # Frontend URL for links
+    FRONTEND_URL: str = "http://localhost:3000"
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [item.strip() for item in self.CORS_ORIGINS.split(",") if item.strip()]
@@ -25,4 +37,9 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-settings = Settings()
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

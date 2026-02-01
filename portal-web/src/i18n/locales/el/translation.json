@@ -1,0 +1,325 @@
+{
+  "common": {
+    "save": "Αποθήκευση",
+    "cancel": "Ακύρωση",
+    "delete": "Διαγραφή",
+    "edit": "Επεξεργασία",
+    "create": "Δημιουργία",
+    "search": "Αναζήτηση",
+    "filter": "Φίλτρο",
+    "export": "Εξαγωγή",
+    "import": "Εισαγωγή",
+    "loading": "Φόρτωση...",
+    "error": "Σφάλμα",
+    "success": "Επιτυχία",
+    "close": "Κλείσιμο",
+    "back": "Πίσω",
+    "next": "Επόμενο",
+    "previous": "Προηγούμενο",
+    "actions": "Ενέργειες",
+    "details": "Λεπτομέρειες",
+    "date": "Ημερομηνία",
+    "status": "Κατάσταση",
+    "description": "Περιγραφή",
+    "name": "Όνομα",
+    "email": "Email",
+    "phone": "Τηλέφωνο",
+    "address": "Διεύθυνση",
+    "notes": "Σημειώσεις",
+    "total": "Σύνολο",
+    "all": "Όλα",
+    "language": "Γλώσσα"
+  },
+  "nav": {
+    "dashboard": "Αρχική",
+    "projects": "Έργα",
+    "inventory": "Αποθήκη",
+    "materials": "Υλικά",
+    "warehouses": "Αποθήκες",
+    "stock": "Απόθεμα",
+    "transactions": "Κινήσεις",
+    "transfers": "Μεταφορές",
+    "reports": "Αναφορές",
+    "documents": "Έγγραφα",
+    "dailyReports": "Ημερήσιες",
+    "issues": "Προβλήματα",
+    "summaries": "Περιλήψεις",
+    "analytics": "Αναλυτικά",
+    "settings": "Ρυθμίσεις",
+    "users": "Χρήστες",
+    "profile": "Προφίλ",
+    "logout": "Αποσύνδεση"
+  },
+  "dashboard": {
+    "title": "Αρχική Σελίδα",
+    "welcome": "Καλώς ήρθατε στο ErgoLab",
+    "stats": {
+      "activeProjects": "Ενεργά Έργα",
+      "totalMaterials": "Συνολικά Υλικά",
+      "lowStock": "Χαμηλό Απόθεμα",
+      "pendingIssues": "Εκκρεμή Προβλήματα",
+      "todayReports": "Αναφορές Σήμερα",
+      "totalWarehouses": "Συνολικές Αποθήκες",
+      "totalTransfers": "Συνολικές Μεταφορές"
+    },
+    "recentActivity": "Πρόσφατη Δραστηριότητα",
+    "noRecentActivity": "Δεν υπάρχουν πρόσφατες ενέργειες",
+    "quickActions": "Γρήγορες Ενέργειες"
+  },
+  "projects": {
+    "title": "Έργα",
+    "createNew": "Νέο Έργο",
+    "editProject": "Επεξεργασία Έργου",
+    "projectDetails": "Λεπτομέρειες Έργου",
+    "fields": {
+      "name": "Όνομα Έργου",
+      "code": "Κωδικός",
+      "location": "Τοποθεσία",
+      "startDate": "Ημ/νία Έναρξης",
+      "endDate": "Ημ/νία Λήξης",
+      "budget": "Προϋπολογισμός",
+      "status": "Κατάσταση",
+      "manager": "Υπεύθυνος"
+    },
+    "status": {
+      "planned": "Σχεδιασμένο",
+      "active": "Ενεργό",
+      "paused": "Σε Αναστολή",
+      "completed": "Ολοκληρωμένο",
+      "cancelled": "Ακυρωμένο"
+    }
+  },
+  "materials": {
+    "title": "Υλικά",
+    "createNew": "Νέο Υλικό",
+    "editMaterial": "Επεξεργασία Υλικού",
+    "fields": {
+      "sku": "SKU",
+      "name": "Όνομα Υλικού",
+      "category": "Κατηγορία",
+      "unit": "Μονάδα Μέτρησης",
+      "cost": "Κόστος",
+      "supplier": "Προμηθευτής",
+      "minQuantity": "Ελάχιστη Ποσότητα",
+      "currentStock": "Τρέχον Απόθεμα"
+    },
+    "units": {
+      "piece": "Τεμάχιο",
+      "kg": "Κιλό",
+      "liter": "Λίτρο",
+      "meter": "Μέτρο",
+      "m2": "Τετραγωνικό Μέτρο",
+      "m3": "Κυβικό Μέτρο",
+      "box": "Κιβώτιο",
+      "bag": "Σακί"
+    }
+  },
+  "inventory": {
+    "title": "Διαχείριση Αποθέματος",
+    "stock": "Απόθεμα",
+    "lowStockAlert": "Προειδοποίηση Χαμηλού Αποθέματος",
+    "transaction": {
+      "title": "Κίνηση Αποθέματος",
+      "type": "Τύπος Κίνησης",
+      "in": "Εισαγωγή",
+      "out": "Εξαγωγή",
+      "adjustment": "Διόρθωση",
+      "quantity": "Ποσότητα",
+      "warehouse": "Αποθήκη",
+      "reference": "Αναφορά",
+      "createdBy": "Δημιουργήθηκε από"
+    },
+    "transfer": {
+      "title": "Μεταφορά Αποθέματος",
+      "from": "Από Αποθήκη",
+      "to": "Προς Αποθήκη",
+      "initiated": "Σε Εκκρεμότητα",
+      "completed": "Ολοκληρωμένη",
+      "cancelled": "Ακυρωμένη"
+    }
+  },
+  "reports": {
+    "daily": {
+      "title": "Ημερήσιες Αναφορές",
+      "createNew": "Νέα Αναφορά",
+      "date": "Ημερομηνία Αναφοράς",
+      "weather": {
+        "title": "Καιρικές Συνθήκες",
+        "sunny": "Ηλιόλουστος",
+        "cloudy": "Συννεφιασμένος",
+        "rainy": "Βροχερός",
+        "stormy": "Καταιγίδα",
+        "temperature": "Θερμοκρασία"
+      },
+      "workers": {
+        "title": "Εργαζόμενοι",
+        "count": "Σύνολο",
+        "present": "Παρόντες",
+        "absent": "Απόντες"
+      },
+      "work": {
+        "title": "Εργασίες",
+        "description": "Περιγραφή Εργασιών",
+        "completed": "Ολοκληρωμένες",
+        "inProgress": "Σε Εξέλιξη"
+      },
+      "progress": {
+        "title": "Πρόοδος",
+        "percentage": "Ποσοστό Ολοκλήρωσης",
+        "notes": "Σημειώσεις Προόδου"
+      },
+      "materials": "Υλικά που Χρησιμοποιήθηκαν",
+      "equipment": "Εξοπλισμός",
+      "safety": "Σημειώσεις Ασφαλείας",
+      "observations": "Παρατηρήσεις"
+    },
+    "issues": {
+      "title": "Προβλήματα",
+      "createNew": "Νέο Πρόβλημα",
+      "category": {
+        "delay": "Καθυστέρηση",
+        "quality": "Ποιότητα",
+        "safety": "Ασφάλεια",
+        "material": "Υλικά",
+        "equipment": "Εξοπλισμός",
+        "weather": "Καιρός",
+        "labor": "Εργασία",
+        "other": "Άλλο"
+      },
+      "severity": {
+        "low": "Χαμηλή",
+        "medium": "Μεσαία",
+        "high": "Υψηλή",
+        "critical": "Κρίσιμη"
+      },
+      "status": {
+        "open": "Ανοιχτό",
+        "inProgress": "Σε Εξέλιξη",
+        "resolved": "Επιλυμένο",
+        "closed": "Κλειστό"
+      },
+      "fields": {
+        "title": "Τίτλος",
+        "description": "Περιγραφή",
+        "assignedTo": "Ανατέθηκε σε",
+        "delayDays": "Ημέρες Καθυστέρησης",
+        "resolution": "Λύση"
+      }
+    },
+    "summaries": {
+      "weekly": "Εβδομαδιαία Περίληψη",
+      "monthly": "Μηνιαία Περίληψη",
+      "final": "Τελική Αναφορά",
+      "period": "Περίοδος",
+      "generate": "Δημιουργία Αναφοράς"
+    }
+  },
+  "analytics": {
+    "title": "Αναλυτικά & Στατιστικά",
+    "dashboard": "Πίνακας Ελέγχου",
+    "costs": {
+      "title": "Ανάλυση Κόστους",
+      "byProject": "Κόστος ανά Έργο",
+      "byCategory": "Κόστος ανά Κατηγορία",
+      "timeline": "Χρονική Εξέλιξη"
+    },
+    "budget": {
+      "title": "Προϋπολογισμός",
+      "planned": "Προγραμματισμένος",
+      "actual": "Πραγματικός",
+      "variance": "Απόκλιση",
+      "overbudget": "Υπέρβαση",
+      "underbudget": "Εντός Προϋπολογισμού"
+    },
+    "materials": {
+      "title": "Τάσεις Υλικών",
+      "consumption": "Κατανάλωση",
+      "trends": "Τάσεις"
+    },
+    "period": {
+      "7days": "7 Ημέρες",
+      "30days": "30 Ημέρες",
+      "90days": "90 Ημέρες",
+      "365days": "365 Ημέρες",
+      "custom": "Προσαρμοσμένη Περίοδος"
+    }
+  },
+  "settings": {
+    "title": "Ρυθμίσεις",
+    "profile": "Προφίλ",
+    "notifications": "Ειδοποιήσεις",
+    "language": "Γλώσσα",
+    "theme": "Θέμα",
+    "notificationPrefs": {
+      "title": "Προτιμήσεις Ειδοποιήσεων",
+      "emailLowStock": "Email για χαμηλό απόθεμα",
+      "emailDailyReports": "Email για ημερήσιες αναφορές",
+      "emailIssueAssigned": "Email για ανάθεση προβλημάτων",
+      "emailBudgetAlerts": "Email για προειδοποιήσεις προϋπολογισμού",
+      "pushNotifications": "Push Ειδοποιήσεις"
+    }
+  },
+  "auth": {
+    "login": "Σύνδεση",
+    "logout": "Αποσύνδεση",
+    "username": "Όνομα Χρήστη",
+    "password": "Κωδικός",
+    "subtitle": "Διαχείριση Συνεργείων & Έργων",
+    "rememberMe": "Να με θυμάσαι",
+    "forgotPassword": "Ξεχάσατε τον κωδικό;",
+    "loginError": "Λάθος στοιχεία σύνδεσης",
+    "loggingIn": "Σύνδεση...",
+    "demoCredentials": "Στοιχεία demo"
+  },
+  "messages": {
+    "saveSuccess": "Αποθηκεύτηκε επιτυχώς",
+    "saveError": "Σφάλμα κατά την αποθήκευση",
+    "deleteSuccess": "Διαγράφηκε επιτυχώς",
+    "deleteError": "Σφάλμα κατά τη διαγραφή",
+    "deleteConfirm": "Είστε σίγουροι ότι θέλετε να διαγράψετε;",
+    "loadingError": "Σφάλμα κατά τη φόρτωση δεδομένων",
+    "noResults": "Δεν βρέθηκαν αποτελέσματα",
+    "networkError": "Σφάλμα δικτύου",
+    "exporting": "Εξαγωγή αναφοράς ως {{format}}...",
+    "exportError": "Η εξαγωγή απαιτεί υλοποίηση στο backend"
+  },
+  "reportsPage": {
+    "title": "Αναφορές & Αναλυτικά",
+    "subtitle": "Προβολή δεδομένων και εξαγωγή αναφορών",
+    "exportCsv": "Εξαγωγή CSV",
+    "exportPdf": "Εξαγωγή PDF",
+    "reportType": "Τύπος Αναφοράς",
+    "warehouse": "Αποθήκη",
+    "allWarehouses": "Όλες οι Αποθήκες",
+    "startDate": "Ημερομηνία Έναρξης",
+    "endDate": "Ημερομηνία Λήξης",
+    "types": {
+      "inventory": "Αναφορά Αποθέματος",
+      "transactions": "Αναφορά Κινήσεων",
+      "overview": "Σύνοψη Συστήματος"
+    },
+    "cards": {
+      "totalMaterials": "Συνολικά Υλικά",
+      "totalValue": "Συνολική Αξία",
+      "lowStockItems": "Χαμηλό Απόθεμα",
+      "outOfStock": "Εκτός Αποθέματος",
+      "totalTransactions": "Σύνολο Κινήσεων",
+      "purchases": "Αγορές",
+      "sales": "Πωλήσεις",
+      "transfers": "Μεταφορές",
+      "activeProjects": "Ενεργά Έργα",
+      "totalWarehouses": "Συνολικές Αποθήκες",
+      "pendingTransfers": "Εκκρεμείς Μεταφορές",
+      "documents": "Έγγραφα"
+    },
+    "inventoryByCategory": "Απόθεμα ανά Κατηγορία",
+    "dailyTrends": "Ημερήσιες Τάσεις Κινήσεων",
+    "table": {
+      "category": "Κατηγορία",
+      "itemCount": "Πλήθος",
+      "totalValue": "Συνολική Αξία",
+      "percentOfTotal": "% του Συνόλου"
+    },
+    "trendFromLastPeriod": "{{value}}% από την προηγούμενη περίοδο"
+  }
+}

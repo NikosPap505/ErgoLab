@@ -1,0 +1,325 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "actions": "Actions",
+    "details": "Details",
+    "date": "Date",
+    "status": "Status",
+    "description": "Description",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "notes": "Notes",
+    "total": "Total",
+    "all": "All",
+    "language": "Language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "inventory": "Inventory",
+    "materials": "Materials",
+    "warehouses": "Warehouses",
+    "stock": "Stock",
+    "transactions": "Transactions",
+    "transfers": "Transfers",
+    "reports": "Reports",
+    "documents": "Documents",
+    "dailyReports": "Daily Reports",
+    "issues": "Issues",
+    "summaries": "Summaries",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "users": "Users",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to ErgoLab",
+    "stats": {
+      "activeProjects": "Active Projects",
+      "totalMaterials": "Total Materials",
+      "lowStock": "Low Stock",
+      "pendingIssues": "Pending Issues",
+      "todayReports": "Today's Reports",
+      "totalWarehouses": "Total Warehouses",
+      "totalTransfers": "Total Transfers"
+    },
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity",
+    "quickActions": "Quick Actions"
+  },
+  "projects": {
+    "title": "Projects",
+    "createNew": "New Project",
+    "editProject": "Edit Project",
+    "projectDetails": "Project Details",
+    "fields": {
+      "name": "Project Name",
+      "code": "Code",
+      "location": "Location",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "budget": "Budget",
+      "status": "Status",
+      "manager": "Manager"
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "materials": {
+    "title": "Materials",
+    "createNew": "New Material",
+    "editMaterial": "Edit Material",
+    "fields": {
+      "sku": "SKU",
+      "name": "Material Name",
+      "category": "Category",
+      "unit": "Unit of Measure",
+      "cost": "Cost",
+      "supplier": "Supplier",
+      "minQuantity": "Minimum Quantity",
+      "currentStock": "Current Stock"
+    },
+    "units": {
+      "piece": "Piece",
+      "kg": "Kilogram",
+      "liter": "Liter",
+      "meter": "Meter",
+      "m2": "Square Meter",
+      "m3": "Cubic Meter",
+      "box": "Box",
+      "bag": "Bag"
+    }
+  },
+  "inventory": {
+    "title": "Inventory Management",
+    "stock": "Stock",
+    "lowStockAlert": "Low Stock Alert",
+    "transaction": {
+      "title": "Stock Transaction",
+      "type": "Transaction Type",
+      "in": "Stock In",
+      "out": "Stock Out",
+      "adjustment": "Adjustment",
+      "quantity": "Quantity",
+      "warehouse": "Warehouse",
+      "reference": "Reference",
+      "createdBy": "Created By"
+    },
+    "transfer": {
+      "title": "Stock Transfer",
+      "from": "From Warehouse",
+      "to": "To Warehouse",
+      "initiated": "Initiated",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "reports": {
+    "daily": {
+      "title": "Daily Reports",
+      "createNew": "New Report",
+      "date": "Report Date",
+      "weather": {
+        "title": "Weather Conditions",
+        "sunny": "Sunny",
+        "cloudy": "Cloudy",
+        "rainy": "Rainy",
+        "stormy": "Stormy",
+        "temperature": "Temperature"
+      },
+      "workers": {
+        "title": "Workers",
+        "count": "Total",
+        "present": "Present",
+        "absent": "Absent"
+      },
+      "work": {
+        "title": "Work",
+        "description": "Work Description",
+        "completed": "Completed",
+        "inProgress": "In Progress"
+      },
+      "progress": {
+        "title": "Progress",
+        "percentage": "Completion Percentage",
+        "notes": "Progress Notes"
+      },
+      "materials": "Materials Used",
+      "equipment": "Equipment",
+      "safety": "Safety Notes",
+      "observations": "Observations"
+    },
+    "issues": {
+      "title": "Issues",
+      "createNew": "New Issue",
+      "category": {
+        "delay": "Delay",
+        "quality": "Quality",
+        "safety": "Safety",
+        "material": "Material",
+        "equipment": "Equipment",
+        "weather": "Weather",
+        "labor": "Labor",
+        "other": "Other"
+      },
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "status": {
+        "open": "Open",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "fields": {
+        "title": "Title",
+        "description": "Description",
+        "assignedTo": "Assigned To",
+        "delayDays": "Delay Days",
+        "resolution": "Resolution"
+      }
+    },
+    "summaries": {
+      "weekly": "Weekly Summary",
+      "monthly": "Monthly Summary",
+      "final": "Final Report",
+      "period": "Period",
+      "generate": "Generate Report"
+    }
+  },
+  "analytics": {
+    "title": "Analytics & Statistics",
+    "dashboard": "Dashboard",
+    "costs": {
+      "title": "Cost Analysis",
+      "byProject": "Cost by Project",
+      "byCategory": "Cost by Category",
+      "timeline": "Timeline"
+    },
+    "budget": {
+      "title": "Budget",
+      "planned": "Planned",
+      "actual": "Actual",
+      "variance": "Variance",
+      "overbudget": "Over Budget",
+      "underbudget": "Under Budget"
+    },
+    "materials": {
+      "title": "Material Trends",
+      "consumption": "Consumption",
+      "trends": "Trends"
+    },
+    "period": {
+      "7days": "7 Days",
+      "30days": "30 Days",
+      "90days": "90 Days",
+      "365days": "365 Days",
+      "custom": "Custom Period"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "notificationPrefs": {
+      "title": "Notification Preferences",
+      "emailLowStock": "Email for low stock",
+      "emailDailyReports": "Email for daily reports",
+      "emailIssueAssigned": "Email for issue assignments",
+      "emailBudgetAlerts": "Email for budget alerts",
+      "pushNotifications": "Push Notifications"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "subtitle": "Workforce & Project Management",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "loginError": "Invalid credentials",
+    "loggingIn": "Logging in...",
+    "demoCredentials": "Demo credentials"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "saveError": "Error saving",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Error deleting",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "loadingError": "Error loading data",
+    "noResults": "No results found",
+    "networkError": "Network error",
+    "exporting": "Exporting report as {{format}}...",
+    "exportError": "Export requires backend implementation"
+  },
+  "reportsPage": {
+    "title": "Reports & Analytics",
+    "subtitle": "View insights and export data",
+    "exportCsv": "Export CSV",
+    "exportPdf": "Export PDF",
+    "reportType": "Report Type",
+    "warehouse": "Warehouse",
+    "allWarehouses": "All Warehouses",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "types": {
+      "inventory": "Inventory Report",
+      "transactions": "Transaction Report",
+      "overview": "System Overview"
+    },
+    "cards": {
+      "totalMaterials": "Total Materials",
+      "totalValue": "Total Value",
+      "lowStockItems": "Low Stock Items",
+      "outOfStock": "Out of Stock",
+      "totalTransactions": "Total Transactions",
+      "purchases": "Purchases",
+      "sales": "Sales",
+      "transfers": "Transfers",
+      "activeProjects": "Active Projects",
+      "totalWarehouses": "Total Warehouses",
+      "pendingTransfers": "Pending Transfers",
+      "documents": "Documents"
+    },
+    "inventoryByCategory": "Inventory by Category",
+    "dailyTrends": "Daily Transaction Trends",
+    "table": {
+      "category": "Category",
+      "itemCount": "Item Count",
+      "totalValue": "Total Value",
+      "percentOfTotal": "% of Total"
+    },
+    "trendFromLastPeriod": "{{value}}% from last period"
+  }
+}

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     projects: 0,
     materials: 0,
@@ -36,19 +38,19 @@ const Dashboard = () => {
   };
 
   const statCards = [
-    { name: 'Ενεργά Έργα', value: stats.projects, icon: '🏗️', color: 'bg-blue-500' },
-    { name: 'Υλικά', value: stats.materials, icon: '📦', color: 'bg-green-500' },
-    { name: 'Αποθήκες', value: stats.warehouses, icon: '🏭', color: 'bg-purple-500' },
-    { name: 'Μεταφορές', value: stats.transfers, icon: '🚚', color: 'bg-orange-500' },
+    { name: t('dashboard.stats.activeProjects'), value: stats.projects, icon: '🏗️', color: 'bg-blue-500' },
+    { name: t('dashboard.stats.totalMaterials'), value: stats.materials, icon: '📦', color: 'bg-green-500' },
+    { name: t('dashboard.stats.totalWarehouses'), value: stats.warehouses, icon: '🏭', color: 'bg-purple-500' },
+    { name: t('dashboard.stats.totalTransfers'), value: stats.transfers, icon: '🚚', color: 'bg-orange-500' },
   ];
 
   if (loading) {
-    return <div className="text-center py-12">Φόρτωση...</div>;
+    return <div className="text-center py-12">{t('common.loading')}</div>;
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('dashboard.title')}</h1>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
@@ -75,8 +77,8 @@ const Dashboard = () => {
       </div>
 
       <div className="mt-8 bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Πρόσφατη Δραστηριότητα</h2>
-        <p className="text-gray-500">Δεν υπάρχουν πρόσφατες ενέργειες</p>
+        <h2 className="text-xl font-semibold mb-4">{t('dashboard.recentActivity')}</h2>
+        <p className="text-gray-500">{t('dashboard.noRecentActivity')}</p>
       </div>
     </div>
   );

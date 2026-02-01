@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../components/Notification';
 import api from '../services/api';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Reports = () => {
+  const { t, i18n } = useTranslation();
   const { showSuccess, showError } = useNotification();
   
   const [loading, setLoading] = useState(true);
@@ -110,7 +112,7 @@ const Reports = () => {
 
   const handleExport = async (format) => {
     try {
-      showSuccess(`Exporting report as ${format.toUpperCase()}...`);
+      showSuccess(t('messages.exporting', { format: format.toUpperCase() }));
       // In production, this would trigger a download
       const response = await api.get(`/api/reports/export?type=${reportType}&format=${format}`, {
         responseType: 'blob'
@@ -124,18 +126,18 @@ const Reports = () => {
       link.click();
       link.remove();
     } catch (error) {
-      showError('Export functionality requires backend implementation');
+      showError(t('messages.exportError'));
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, trend, color = 'blue' }) => (
+  const StatCard = ({ title, value, icon: Icon, trend, color = 'blue', isCurrency = false }) => (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500 mb-1">{title}</p>
           <p className="text-2xl font-bold text-gray-900">
-            {typeof value === 'number' && title.includes('Value') 
-              ? `€${value.toLocaleString()}` 
+            {typeof value === 'number' && isCurrency
+              ? `€${value.toLocaleString()}`
               : value?.toLocaleString()}
           </p>
           {trend && (
@@ -145,7 +147,7 @@ const Reports = () => {
               ) : (
                 <ArrowTrendingDownIcon className="h-4 w-4 mr-1" />
               )}
-              <span>{Math.abs(trend)}% from last period</span>
+              <span>{t('reportsPage.trendFromLastPeriod', { value: Math.abs(trend) })}</span>
             </div>
           )}
         </div>
@@ -156,13 +158,18 @@ const Reports = () => {
     </div>
   );
 
+  const dateLocale = useMemo(
+    () => (i18n.language === 'el' ? 'el-GR' : 'en-US'),
+    [i18n.language]
+  );
+
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-gray-500">View insights and export data</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('reportsPage.title')}</h1>
+          <p className="text-gray-500">{t('reportsPage.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -170,14 +177,14 @@ const Reports = () => {
             className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <DocumentArrowDownIcon className="h-5 w-5 mr-2" />
-            Export CSV
+            {t('reportsPage.exportCsv')}
           </button>
           <button
             onClick={() => handleExport('pdf')}
             className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
             <DocumentArrowDownIcon className="h-5 w-5 mr-2" />
-            Export PDF
+            {t('reportsPage.exportPdf')}
           </button>
         </div>
       </div>
@@ -186,26 +193,26 @@ const Reports = () => {
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('reportsPage.reportType')}</label>
             <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
-              <option value="inventory">Inventory Report</option>
-              <option value="transactions">Transaction Report</option>
-              <option value="overview">System Overview</option>
+              <option value="inventory">{t('reportsPage.types.inventory')}</option>
+              <option value="transactions">{t('reportsPage.types.transactions')}</option>
+              <option value="overview">{t('reportsPage.types.overview')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('reportsPage.warehouse')}</label>
             <select
               value={selectedWarehouse}
               onChange={(e) => setSelectedWarehouse(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
-              <option value="all">All Warehouses</option>
+              <option value="all">{t('reportsPage.allWarehouses')}</option>
               {warehouses.map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
@@ -213,7 +220,7 @@ const Reports = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('reportsPage.startDate')}</label>
             <input
               type="date"
               value={dateRange.start}
@@ -223,7 +230,7 @@ const Reports = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('reportsPage.endDate')}</label>
             <input
               type="date"
               value={dateRange.end}
@@ -249,25 +256,26 @@ const Reports = () => {
           {reportType === 'inventory' && reportData?.summary && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <StatCard
-                title="Total Materials"
+                title={t('reportsPage.cards.totalMaterials')}
                 value={reportData.summary.total_materials}
                 icon={CubeIcon}
                 color="blue"
               />
               <StatCard
-                title="Total Value"
+                title={t('reportsPage.cards.totalValue')}
                 value={reportData.summary.total_value}
                 icon={ChartBarIcon}
                 color="green"
+                isCurrency
               />
               <StatCard
-                title="Low Stock Items"
+                title={t('reportsPage.cards.lowStockItems')}
                 value={reportData.summary.low_stock_items}
                 icon={ArrowTrendingDownIcon}
                 color="yellow"
               />
               <StatCard
-                title="Out of Stock"
+                title={t('reportsPage.cards.outOfStock')}
                 value={reportData.summary.out_of_stock_items}
                 icon={BuildingStorefrontIcon}
                 color="red"
@@ -278,28 +286,28 @@ const Reports = () => {
           {reportType === 'transactions' && reportData?.summary && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <StatCard
-                title="Total Transactions"
+                title={t('reportsPage.cards.totalTransactions')}
                 value={reportData.summary.total_transactions}
                 icon={ChartBarIcon}
                 trend={12}
                 color="blue"
               />
               <StatCard
-                title="Purchases"
+                title={t('reportsPage.cards.purchases')}
                 value={reportData.summary.purchases}
                 icon={ArrowTrendingUpIcon}
                 trend={8}
                 color="green"
               />
               <StatCard
-                title="Sales"
+                title={t('reportsPage.cards.sales')}
                 value={reportData.summary.sales}
                 icon={ArrowTrendingDownIcon}
                 trend={-5}
                 color="purple"
               />
               <StatCard
-                title="Transfers"
+                title={t('reportsPage.cards.transfers')}
                 value={reportData.summary.transfers}
                 icon={CalendarIcon}
                 color="orange"
@@ -310,25 +318,25 @@ const Reports = () => {
           {reportType === 'overview' && reportData?.summary && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <StatCard
-                title="Active Projects"
+                title={t('reportsPage.cards.activeProjects')}
                 value={reportData.summary.active_projects}
                 icon={CalendarIcon}
                 color="blue"
               />
               <StatCard
-                title="Total Warehouses"
+                title={t('reportsPage.cards.totalWarehouses')}
                 value={reportData.summary.total_warehouses}
                 icon={BuildingStorefrontIcon}
                 color="green"
               />
               <StatCard
-                title="Pending Transfers"
+                title={t('reportsPage.cards.pendingTransfers')}
                 value={reportData.summary.pending_transfers}
                 icon={ArrowTrendingUpIcon}
                 color="yellow"
               />
               <StatCard
-                title="Documents"
+                title={t('reportsPage.cards.documents')}
                 value={reportData.summary.documents_uploaded}
                 icon={CubeIcon}
                 color="purple"
@@ -339,15 +347,15 @@ const Reports = () => {
           {/* Detailed Data */}
           {reportType === 'inventory' && reportData?.by_category && (
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Inventory by Category</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('reportsPage.inventoryByCategory')}</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Count</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Value</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% of Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('reportsPage.table.category')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('reportsPage.table.itemCount')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('reportsPage.table.totalValue')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('reportsPage.table.percentOfTotal')}</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -377,7 +385,7 @@ const Reports = () => {
 
           {reportType === 'transactions' && reportData?.daily && (
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Daily Transaction Trends</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('reportsPage.dailyTrends')}</h3>
               <div className="h-64 flex items-end justify-between gap-1">
                 {reportData.daily.slice(-14).map((day, idx) => (
                   <div key={idx} className="flex-1 flex flex-col items-center">
@@ -385,21 +393,21 @@ const Reports = () => {
                       <div
                         className="w-full bg-green-500 rounded-t"
                         style={{ height: `${day.purchases * 5}px` }}
-                        title={`Purchases: ${day.purchases}`}
+                        title={`${t('reportsPage.cards.purchases')}: ${day.purchases}`}
                       ></div>
                       <div
                         className="w-full bg-purple-500"
                         style={{ height: `${day.sales * 5}px` }}
-                        title={`Sales: ${day.sales}`}
+                        title={`${t('reportsPage.cards.sales')}: ${day.sales}`}
                       ></div>
                       <div
                         className="w-full bg-blue-500 rounded-b"
                         style={{ height: `${day.transfers * 5}px` }}
-                        title={`Transfers: ${day.transfers}`}
+                        title={`${t('reportsPage.cards.transfers')}: ${day.transfers}`}
                       ></div>
                     </div>
                     <span className="text-xs text-gray-500 mt-2 transform -rotate-45 origin-left">
-                      {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(day.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
                 ))}
@@ -407,15 +415,15 @@ const Reports = () => {
               <div className="flex justify-center gap-6 mt-8">
                 <div className="flex items-center">
                   <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                  <span className="text-sm">Purchases</span>
+                  <span className="text-sm">{t('reportsPage.cards.purchases')}</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
-                  <span className="text-sm">Sales</span>
+                  <span className="text-sm">{t('reportsPage.cards.sales')}</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                  <span className="text-sm">Transfers</span>
+                  <span className="text-sm">{t('reportsPage.cards.transfers')}</span>
                 </div>
               </div>
             </div>

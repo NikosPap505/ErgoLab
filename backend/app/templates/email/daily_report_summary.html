@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📋 Ημερήσια Αναφορά Έργου</h2>
+
+<p><strong>Έργο:</strong> {{ project_name }}</p>
+<p><strong>Ημερομηνία:</strong> {{ report_date }}</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <div class="metric">
+        <div class="metric-value">{{ workers_count }}</div>
+        <div class="metric-label">Εργαζόμενοι</div>
+    </div>
+    <div class="metric">
+        <div class="metric-value">{{ progress_percentage }}%</div>
+        <div class="metric-label">Πρόοδος</div>
+    </div>
+    <div class="metric">
+        <div class="metric-value">{{ issues_count }}</div>
+        <div class="metric-label">Προβλήματα</div>
+    </div>
+</div>
+
+{% if issues_count > 0 %}
+<div class="alert alert-warning">
+    <strong>⚠️ Προσοχή:</strong> Υπάρχουν {{ issues_count }} ανοιχτά προβλήματα που απαιτούν επίλυση.
+</div>
+{% endif %}
+
+<a href="{{ frontend_url }}/reports/daily/{{ report_id }}" class="btn">Προβολή Πλήρους Αναφοράς</a>
+{% endblock %}

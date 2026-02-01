@@ -31,3 +31,9 @@ class User(Base):
     assigned_projects = relationship("ProjectAssignment", back_populates="user")
     stock_transactions = relationship("StockTransaction", back_populates="user")
     transfers_created = relationship("Transfer", back_populates="created_by")
+    notification_preferences = relationship(
+        "NotificationPreferences",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

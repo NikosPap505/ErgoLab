@@ -7,6 +7,7 @@ from .transfer import Transfer, TransferItem
 from .document import Document, Annotation
 from .report import Report
 from .analytics import CostTracking, Budget, MaterialUsageTrend, Alert
+from .notification import NotificationPreferences
 from .reports import (
     DailyReport,
     Issue,
@@ -38,6 +39,7 @@ __all__ = [
 	"Budget",
 	"MaterialUsageTrend",
 	"Alert",
+	"NotificationPreferences",
 	"DailyReport",
 	"Issue",
 	"WorkItem",

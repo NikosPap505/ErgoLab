@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert {% if severity_class == 'critical' %}alert-danger{% else %}alert-warning{% endif %}">
+    <strong>🔴 Νέο Πρόβλημα - {{ severity }}</strong>
+</div>
+
+<h2>Ανάθεση Προβλήματος</h2>
+
+<p>Σας ανατέθηκε ένα νέο πρόβλημα από <strong>{{ assigned_by }}</strong>:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background-color: #f8f9fa;">
+        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Τίτλος:</strong></td>
+        <td style="padding: 12px; border: 1px solid #dee2e6;">{{ issue_title }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Έργο:</strong></td>
+        <td style="padding: 12px; border: 1px solid #dee2e6;">{{ project_name }}</td>
+    </tr>
+    <tr style="background-color: #f8f9fa;">
+        <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Σοβαρότητα:</strong></td>
+        <td style="padding: 12px; border: 1px solid #dee2e6;">
+            <span style="color: {% if severity_class == 'critical' %}#dc3545{% elif severity_class == 'high' %}#fd7e14{% else %}#ffc107{% endif %}; font-weight: bold;">
+                {{ severity }}
+            </span>
+        </td>
+    </tr>
+</table>
+
+{% if severity_class == 'critical' %}
+<div class="alert alert-danger">
+    <strong>🚨 Κρίσιμο:</strong> Αυτό το πρόβλημα απαιτεί άμεση αντιμετώπιση!
+</div>
+{% endif %}
+
+<a href="{{ frontend_url }}/issues/{{ issue_id }}" class="btn">Προβολή Προβλήματος</a>
+{% endblock %}
