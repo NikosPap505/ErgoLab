@@ -387,7 +387,7 @@
     },
     "status": {
       "pending": "Σε Εκκρεμότητα",
-      "in_transit": "Σε Μεταφορά",
+      "inTransit": "Σε Μεταφορά",
       "completed": "Ολοκληρωμένη",
       "cancelled": "Ακυρωμένη"
     },

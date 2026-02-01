@@ -97,7 +97,7 @@ const Transfers = () => {
   const getStatusBadge = (status) => {
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800',
-      in_transit: 'bg-blue-100 text-blue-800',
+    inTransit: 'bg-blue-100 text-blue-800',
       completed: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800'
     };
@@ -157,7 +157,7 @@ const Transfers = () => {
         >
           <option value="all">{t('transfers.allStatus')}</option>
           <option value="pending">{t('transfers.status.pending')}</option>
-          <option value="in_transit">{t('transfers.status.in_transit')}</option>
+          <option value="inTransit">{t('transfers.status.inTransit')}</option>
           <option value="completed">{t('transfers.status.completed')}</option>
           <option value="cancelled">{t('transfers.status.cancelled')}</option>
         </select>
@@ -168,7 +168,7 @@ const Transfers = () => {
         {[
           { label: t('transfers.stats.total'), value: transfers.length, icon: ArrowsRightLeftIcon, color: 'blue' },
           { label: t('transfers.stats.pending'), value: transfers.filter(transfer => transfer.status === 'pending').length, icon: ClockIcon, color: 'yellow' },
-          { label: t('transfers.stats.inTransit'), value: transfers.filter(transfer => transfer.status === 'in_transit').length, icon: TruckIcon, color: 'purple' },
+          { label: t('transfers.stats.inTransit'), value: transfers.filter(transfer => transfer.status === 'inTransit').length, icon: TruckIcon, color: 'purple' },
           { label: t('transfers.stats.completed'), value: transfers.filter(transfer => transfer.status === 'completed').length, icon: CheckIcon, color: 'green' }
         ].map((stat, idx) => (
           <div key={idx} className="bg-white rounded-lg shadow p-4">
@@ -228,7 +228,7 @@ const Transfers = () => {
                     {transfer.status === 'pending' && (
                       <>
                         <button
-                          onClick={() => handleStatusUpdate(transfer.id, 'in_transit')}
+                          onClick={() => handleStatusUpdate(transfer.id, 'inTransit')}
                           className="text-blue-600 hover:text-blue-800"
                           title={t('transfers.actions.markInTransit')}
                         >
@@ -243,7 +243,7 @@ const Transfers = () => {
                         </button>
                       </>
                     )}
-                    {transfer.status === 'in_transit' && (
+                    {transfer.status === 'inTransit' && (
                       <button
                         onClick={() => handleStatusUpdate(transfer.id, 'completed')}
                         className="text-green-600 hover:text-green-800"

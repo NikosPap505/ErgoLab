@@ -387,7 +387,7 @@
     },
     "status": {
       "pending": "Pending",
-      "in_transit": "In Transit",
+      "inTransit": "In Transit",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },

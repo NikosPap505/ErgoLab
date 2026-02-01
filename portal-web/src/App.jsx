@@ -74,7 +74,7 @@ function App() {
                     }
                   />
                 </Routes>
-              </BrowserRouter>
+              </HashRouter>
             </PermissionProvider>
           </ToastProvider>
         </NotificationProvider>

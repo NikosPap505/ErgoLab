@@ -317,7 +317,7 @@ def generate_consumables_by_project_report(
                 "material_name": r.name,
                 "sku": r.sku,
                 "category": r.category,
-                "quantity": r.total_quantity,
+                "quantity": float(r.total_quantity) if r.total_quantity else 0,
                 "total_cost": float(r.total_cost) if r.total_cost else 0,
             }
             for r in results
