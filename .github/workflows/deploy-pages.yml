@@ -38,9 +38,7 @@ jobs:
       - name: Build
         run: |
           cd portal-web
-          npm run build
-        env:
-          VITE_GITHUB_PAGES: true
+          npm run build -- --mode github-pages
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

@@ -7,11 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // Set base path for GitHub Pages deployment
   // For repo at github.com/username/ErgoLab, use '/ErgoLab/'
   // For custom domain or root deployment, use '/'
-  base: import.meta.env.VITE_GITHUB_PAGES ? '/ErgoLab/' : '/',
+  base: mode === 'github-pages' ? '/ErgoLab/' : '/',
   plugins: [react()],
   server: {
     port: 3000,
@@ -53,4 +53,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

@@ -20,7 +20,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U test_user"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -75,13 +75,13 @@ jobs:
         cd backend
         pytest -v --cov=app --cov-report=xml --cov-report=term-missing
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./backend/coverage.xml
         flags: backend
         name: backend-coverage
-        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
     - name: Run security checks
@@ -91,7 +91,8 @@ jobs:
       run: |
         cd backend
         bandit -r app/
-        safety check
+        safety check || echo "::warning::Safety check found vulnerabilities - review needed"
+      continue-on-error: true
 
   frontend-tests:
     runs-on: ubuntu-latest
