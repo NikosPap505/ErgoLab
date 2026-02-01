@@ -27,9 +27,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Don't redirect if it's a login attempt
+    if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Use hash routing for redirect
+      window.location.hash = '/login';
     }
     return Promise.reject(error);
   }
