@@ -166,7 +166,8 @@ def cached(expire: int = 300, key_prefix: str = ""):
                 key_prefix or func.__module__,
                 func.__name__,
                 hashlib.md5(
-                    f"{str(args)}:{str(sorted(filtered_kwargs.items()))}".encode()
+                    f"{str(args)}:{str(sorted(filtered_kwargs.items()))}".encode(),
+                    usedforsecurity=False
                 ).hexdigest()[:12]
             ]
             cache_key = ":".join(key_parts)

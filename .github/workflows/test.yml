@@ -112,7 +112,7 @@ jobs:
     - name: Run tests
       run: |
         cd portal-web
-        npm test -- --coverage --watchAll=false
+        npm run test:run -- --coverage
 
     - name: Build
       run: |
