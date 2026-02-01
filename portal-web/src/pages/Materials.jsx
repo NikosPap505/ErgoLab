@@ -29,7 +29,7 @@ const Materials = () => {
     try {
       const response = await api.get('/api/materials/');
       setMaterials(response.data);
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα φόρτωσης υλικών', 'error');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ const Materials = () => {
       
       handleCloseModal();
       loadMaterials();
-    } catch (error) {
+    } catch (_error) {
       showNotification(error.response?.data?.detail || 'Σφάλμα αποθήκευσης', 'error');
     }
   };
@@ -91,7 +91,7 @@ const Materials = () => {
       showNotification('Το υλικό διαγράφηκε επιτυχώς');
       setDeleteConfirm(null);
       loadMaterials();
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα διαγραφής', 'error');
     }
   };

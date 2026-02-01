@@ -43,7 +43,7 @@ const DocumentAnnotate = () => {
       // Get presigned URL for the file
       const downloadResponse = await api.get(`/api/documents/${documentId}/download`);
       setFileUrl(downloadResponse.data.url);
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα φόρτωσης εγγράφου', 'error');
       navigate('/documents');
     } finally {
@@ -113,7 +113,7 @@ const DocumentAnnotate = () => {
           console.log('Annotations loaded and rendered');
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.log('Error loading annotations:', error);
     }
   }, [documentId, pageNumber]);
@@ -333,7 +333,7 @@ const DocumentAnnotate = () => {
       });
 
       showNotification('Οι σημειώσεις αποθηκεύτηκαν!');
-    } catch (error) {
+    } catch (_error) {
       console.error('Save error:', error);
       showNotification('Σφάλμα αποθήκευσης', 'error');
     } finally {

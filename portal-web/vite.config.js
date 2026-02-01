@@ -8,6 +8,10 @@ const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Set base path for GitHub Pages deployment
+  // For repo at github.com/username/ErgoLab, use '/ErgoLab/'
+  // For custom domain or root deployment, use '/'
+  base: process.env.GITHUB_PAGES ? '/ErgoLab/' : '/',
   plugins: [react()],
   server: {
     port: 3000,

@@ -30,7 +30,7 @@ const Reports = () => {
     try {
       const response = await api.get('/api/warehouses/');
       setWarehouses(response.data);
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load warehouses');
     }
   }, []);
@@ -51,7 +51,7 @@ const Reports = () => {
 
       const response = await api.get(`${endpoint}?${params}`);
       setReportData(response.data);
-    } catch (error) {
+    } catch (_error) {
       // Mock data if API not available
       setReportData(generateMockData(reportType));
     } finally {
@@ -125,7 +125,7 @@ const Reports = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
+    } catch (_error) {
       showError(t('messages.exportError'));
     }
   };

@@ -28,7 +28,7 @@ const Projects = () => {
     try {
       const response = await api.get('/api/projects/');
       setProjects(response.data);
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα φόρτωσης έργων', 'error');
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ const Projects = () => {
       
       handleCloseModal();
       loadProjects();
-    } catch (error) {
+    } catch (_error) {
       showNotification(error.response?.data?.detail || 'Σφάλμα αποθήκευσης', 'error');
     }
   };
@@ -101,7 +101,7 @@ const Projects = () => {
       showNotification('Το έργο διαγράφηκε επιτυχώς');
       setDeleteConfirm(null);
       loadProjects();
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα διαγραφής', 'error');
     }
   };

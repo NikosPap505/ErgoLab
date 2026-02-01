@@ -4,7 +4,8 @@ pytest-asyncio==0.25.3
 httpx==0.28.1
 coverage==7.6.10
 bandit==1.7.8
-safety==3.2.4
+safety==3.2.11
+typer<0.13.0  # Pin typer for safety compatibility
 flake8==7.1.1
 black==24.10.0
 mypy==1.14.1

@@ -29,7 +29,7 @@ const Documents = () => {
       if (response.data.length > 0) {
         setSelectedProject(response.data[0].id);
       }
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα φόρτωσης έργων', 'error');
     } finally {
       setLoading(false);
@@ -41,7 +41,7 @@ const Documents = () => {
     try {
       const response = await api.get(`/api/documents/project/${selectedProject}`);
       setDocuments(response.data);
-    } catch (error) {
+    } catch (_error) {
       // May not have documents yet
       setDocuments([]);
     }
@@ -96,7 +96,7 @@ const Documents = () => {
       setUploadModal(false);
       setUploadData({ title: '', description: '', files: [] });
       loadDocuments();
-    } catch (error) {
+    } catch (_error) {
       showNotification(error.response?.data?.detail || 'Σφάλμα μεταφόρτωσης', 'error');
     }
   };
@@ -107,7 +107,7 @@ const Documents = () => {
       showNotification('Το έγγραφο διαγράφηκε επιτυχώς');
       setDeleteConfirm(null);
       loadDocuments();
-    } catch (error) {
+    } catch (_error) {
       showNotification('Σφάλμα διαγραφής', 'error');
     }
   };
