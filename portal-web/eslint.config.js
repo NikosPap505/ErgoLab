@@ -28,7 +28,7 @@ export default [
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off', // Not needed in React 17+
-      'react/prop-types': 'warn',
+      'react/prop-types': 'off', // Not using PropTypes in this project
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
     settings: {
