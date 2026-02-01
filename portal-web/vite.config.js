@@ -12,6 +12,11 @@ export default defineConfig(({ mode }) => ({
   // For repo at github.com/username/ErgoLab, use '/ErgoLab/'
   // For custom domain or root deployment, use '/'
   base: mode === 'github-pages' ? '/ErgoLab/' : '/',
+  define: {
+    'import.meta.env.VITE_API_URL': mode === 'github-pages' 
+      ? JSON.stringify('https://ergolab-production.up.railway.app')
+      : undefined,
+  },
   plugins: [react()],
   server: {
     port: 3000,
