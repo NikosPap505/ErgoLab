@@ -81,7 +81,7 @@ class DailyReport(Base):
     
     # Relationships
     project = relationship("Project", back_populates="daily_reports")
-    creator = relationship("User")
+    creator = relationship("User", back_populates="created_reports")
     issues = relationship("Issue", back_populates="daily_report")
     photos = relationship("ReportPhoto", back_populates="daily_report")
 
@@ -124,8 +124,8 @@ class Issue(Base):
     # Relationships
     project = relationship("Project", back_populates="issues")
     daily_report = relationship("DailyReport", back_populates="issues")
-    assigned_user = relationship("User", foreign_keys=[assigned_to])
-    reporter = relationship("User", foreign_keys=[reported_by])
+    assigned_user = relationship("User", foreign_keys=[assigned_to], back_populates="assigned_issues")
+    reporter = relationship("User", foreign_keys=[reported_by], back_populates="created_issues")
     photos = relationship("IssuePhoto", back_populates="issue")
 
 class WorkItem(Base):

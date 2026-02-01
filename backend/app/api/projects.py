@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
+from app.core.permissions import Permission, check_permission
 from app.core.database import get_db
 from app.core.cache import cache, CacheKeys
 from app.models.project import Project
@@ -14,7 +15,12 @@ router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
 
 @router.get("/", response_model=List[ProjectResponse])
-def list_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def list_projects(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(check_permission(Permission.PROJECT_READ)),
+):
     # Try cache first
     cache_key = CacheKeys.projects_list()
     cached_data = cache.get(cache_key)
@@ -48,7 +54,7 @@ def list_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 def create_project(
     payload: ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_permission(Permission.PROJECT_CREATE)),
 ):
     existing = db.query(Project).filter(Project.code == payload.code).first()
     if existing:
@@ -67,7 +73,11 @@ def create_project(
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-def get_project(project_id: int, db: Session = Depends(get_db)):
+def get_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(check_permission(Permission.PROJECT_READ)),
+):
     # Try cache first
     cache_key = CacheKeys.project_detail(project_id)
     cached_data = cache.get(cache_key)
@@ -99,7 +109,7 @@ def update_project(
     project_id: int,
     payload: ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_permission(Permission.PROJECT_UPDATE)),
 ):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -123,7 +133,7 @@ def update_project(
 def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_permission(Permission.PROJECT_DELETE)),
 ):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:

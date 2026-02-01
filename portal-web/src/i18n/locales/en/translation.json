@@ -7,6 +7,7 @@
     "create": "Create",
     "search": "Search",
     "filter": "Filter",
+    "clear": "Clear",
     "export": "Export",
     "import": "Import",
     "loading": "Loading...",
@@ -28,7 +29,12 @@
     "notes": "Notes",
     "total": "Total",
     "all": "All",
-    "language": "Language"
+    "language": "Language",
+    "confirm": "Confirm",
+    "backToDashboard": "Back to dashboard"
+  },
+  "emptyState": {
+    "noData": "No data available"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -282,6 +288,41 @@
     "networkError": "Network error",
     "exporting": "Exporting report as {{format}}...",
     "exportError": "Export requires backend implementation"
+  },
+  "errors": {
+    "accessDenied": "Access denied",
+    "noPermission": "You don't have permission to perform this action",
+    "loadUsers": "Error loading users",
+    "saveUser": "Error saving user",
+    "deleteUser": "Error deleting user"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "supervisor": "Supervisor",
+    "worker": "Worker",
+    "viewer": "Viewer"
+  },
+  "users": {
+    "title": "Users",
+    "createNew": "New User",
+    "editUser": "Edit User",
+    "searchPlaceholder": "Search users...",
+    "noUsers": "No users found",
+    "active": "Active",
+    "inactive": "Inactive",
+    "rolePermissionHint": "Role changes require additional permissions",
+    "passwordHint": "Leave blank to keep current password",
+    "fields": {
+      "username": "Username",
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "role": "Role",
+      "status": "Status",
+      "password": "Password"
+    }
   },
   "reportsPage": {
     "title": "Reports & Analytics",

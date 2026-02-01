@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_, or_
 from app.core.database import get_db
+from app.core.permissions import Permission, check_permission
 from app.api.auth import get_current_user
 from app.models.project import Project, ProjectAssignment
 from app.models.user import User, UserRole
@@ -35,7 +36,7 @@ async def create_daily_report(
     report: DailyReportCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(check_permission(Permission.REPORT_CREATE))
 ):
     """Δημιουργία Ημερήσιας Αναφοράς"""
     
@@ -159,7 +160,7 @@ async def update_daily_report(
     report_id: int,
     report: DailyReportCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(check_permission(Permission.REPORT_UPDATE))
 ):
     """Ενημέρωση Ημερήσιας Αναφοράς"""
     
@@ -183,7 +184,7 @@ async def update_daily_report(
 async def delete_daily_report(
     report_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(check_permission(Permission.REPORT_DELETE))
 ):
     """Διαγραφή Ημερήσιας Αναφοράς"""
     

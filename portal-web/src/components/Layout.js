@@ -2,10 +2,12 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../context/PermissionContext';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -18,7 +20,14 @@ const Layout = ({ children }) => {
     { name: t('nav.transfers'), href: '/transfers', icon: '🚚' },
     { name: t('nav.documents'), href: '/documents', icon: '📄' },
     { name: t('nav.reports'), href: '/reports', icon: '📈' },
+    { name: t('nav.users'), href: '/users', icon: '👥', permission: 'user:read' },
   ];
+
+  const canViewItem = (item) => {
+    if (!item.permission) return true;
+    if (permissionsLoading) return true;
+    return hasPermission(item.permission);
+  };
 
   const handleLogout = () => {
     logout();
@@ -35,7 +44,7 @@ const Layout = ({ children }) => {
           </div>
           <div className="flex-1 flex flex-col overflow-y-auto">
             <nav className="flex-1 px-2 py-4 space-y-1">
-              {navigation.map((item) => {
+              {navigation.filter(canViewItem).map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link

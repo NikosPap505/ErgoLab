@@ -7,6 +7,7 @@
     "create": "Δημιουργία",
     "search": "Αναζήτηση",
     "filter": "Φίλτρο",
+    "clear": "Καθαρισμός",
     "export": "Εξαγωγή",
     "import": "Εισαγωγή",
     "loading": "Φόρτωση...",
@@ -28,7 +29,12 @@
     "notes": "Σημειώσεις",
     "total": "Σύνολο",
     "all": "Όλα",
-    "language": "Γλώσσα"
+    "language": "Γλώσσα",
+    "confirm": "Επιβεβαίωση",
+    "backToDashboard": "Επιστροφή στον πίνακα"
+  },
+  "emptyState": {
+    "noData": "Δεν υπάρχουν διαθέσιμα δεδομένα"
   },
   "nav": {
     "dashboard": "Αρχική",
@@ -282,6 +288,41 @@
     "networkError": "Σφάλμα δικτύου",
     "exporting": "Εξαγωγή αναφοράς ως {{format}}...",
     "exportError": "Η εξαγωγή απαιτεί υλοποίηση στο backend"
+  },
+  "errors": {
+    "accessDenied": "Δεν έχετε πρόσβαση",
+    "noPermission": "Δεν έχετε άδεια για αυτή την ενέργεια",
+    "loadUsers": "Σφάλμα φόρτωσης χρηστών",
+    "saveUser": "Σφάλμα αποθήκευσης χρήστη",
+    "deleteUser": "Σφάλμα διαγραφής χρήστη"
+  },
+  "roles": {
+    "admin": "Διαχειριστής",
+    "manager": "Υπεύθυνος",
+    "supervisor": "Επόπτης",
+    "worker": "Εργαζόμενος",
+    "viewer": "Θεατής"
+  },
+  "users": {
+    "title": "Χρήστες",
+    "createNew": "Νέος Χρήστης",
+    "editUser": "Επεξεργασία Χρήστη",
+    "searchPlaceholder": "Αναζήτηση χρηστών...",
+    "noUsers": "Δεν βρέθηκαν χρήστες",
+    "active": "Ενεργός",
+    "inactive": "Ανενεργός",
+    "rolePermissionHint": "Η αλλαγή ρόλου απαιτεί επιπλέον άδειες",
+    "passwordHint": "Αφήστε κενό για να διατηρηθεί ο κωδικός",
+    "fields": {
+      "username": "Όνομα χρήστη",
+      "fullName": "Ονοματεπώνυμο",
+      "email": "Email",
+      "phone": "Τηλέφωνο",
+      "address": "Διεύθυνση",
+      "role": "Ρόλος",
+      "status": "Κατάσταση",
+      "password": "Κωδικός"
+    }
   },
   "reportsPage": {
     "title": "Αναφορές & Αναλυτικά",
