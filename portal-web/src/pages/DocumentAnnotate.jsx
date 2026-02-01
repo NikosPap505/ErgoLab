@@ -251,7 +251,7 @@ const DocumentAnnotate = () => {
     };
 
     switch (activeTool) {
-      case 'rectangle':
+      case 'rectangle': {
         const newRect = new Rect({
           left: pointer.x,
           top: pointer.y,
@@ -263,7 +263,8 @@ const DocumentAnnotate = () => {
         });
         canvas.add(newRect);
         break;
-      case 'circle':
+      }
+      case 'circle': {
         const circle = new Circle({
           left: pointer.x,
           top: pointer.y,
@@ -274,7 +275,8 @@ const DocumentAnnotate = () => {
         });
         canvas.add(circle);
         break;
-      case 'text':
+      }
+      case 'text': {
         if (textInput) {
           const text = new IText(textInput, {
             left: pointer.x,
@@ -287,7 +289,8 @@ const DocumentAnnotate = () => {
           setTextInput('');
         }
         break;
-      case 'arrow':
+      }
+      case 'arrow': {
         const line = new Line([pointer.x, pointer.y, pointer.x + 100, pointer.y], {
           stroke: brushColor,
           strokeWidth: brushWidth,
@@ -309,6 +312,7 @@ const DocumentAnnotate = () => {
         });
         canvas.add(group);
         break;
+      }
       default:
         break;
     }
