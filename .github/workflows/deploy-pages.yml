@@ -36,6 +36,8 @@ jobs:
           npm ci
 
       - name: Build
+        env:
+          VITE_API_URL: https://ergolab-production.up.railway.app
         run: |
           cd portal-web
           npm run build -- --mode github-pages
