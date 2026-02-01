@@ -52,6 +52,8 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_ergolab
       run: |
         cd backend
         pip install -r requirements.txt -r requirements-dev.txt
@@ -79,8 +81,13 @@ jobs:
         file: ./backend/coverage.xml
         flags: backend
         name: backend-coverage
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
 
     - name: Run security checks
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_ergolab
+        SECRET_KEY: test-secret-key
       run: |
         cd backend
         bandit -r app/
