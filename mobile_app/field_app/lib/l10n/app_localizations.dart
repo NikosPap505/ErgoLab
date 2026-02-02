@@ -149,8 +149,10 @@ class AppLocalizations {
   String get date => _get('date');
   String get type => _get('type');
   String get result => _get('result');
+  String get name => _get('name');
   String get qrBarcodeValue => _get('qrBarcodeValue');
   String get data => _get('data');
+  String get unknownDate => _get('unknownDate');
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'el': {
@@ -259,8 +261,10 @@ class AppLocalizations {
       'date': 'Ημερομηνία',
       'type': 'Τύπος',
       'result': 'Αποτέλεσμα',
+      'name': 'Όνομα',
       'qrBarcodeValue': 'Τιμή QR/Barcode:',
       'data': 'Δεδομένα:',
+      'unknownDate': 'Άγνωστη ημερομηνία',
     },
     'en': {
       'notificationSettings': 'Notification Settings',
@@ -368,8 +372,10 @@ class AppLocalizations {
       'date': 'Date',
       'type': 'Type',
       'result': 'Result',
+      'name': 'Name',
       'qrBarcodeValue': 'QR/Barcode value:',
       'data': 'Data:',
+      'unknownDate': 'Unknown date',
     },
   };
 }
