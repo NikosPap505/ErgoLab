@@ -332,12 +332,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   void _showWorkerDetail(Map<String, dynamic> workerData) {
+    final apiService = context.read<AppState>().apiService;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => WorkerDetailSheet(
         workerData: workerData,
+        apiService: apiService,
         onClose: () {
           Navigator.pop(context);
           if (!mounted || _isDisposed) return;
