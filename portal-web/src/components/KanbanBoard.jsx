@@ -208,31 +208,73 @@ const KanbanBoard = ({ projectId }) => {
 
 const KanbanColumn = ({ id, title, color, items }) => {
   const { isOver, setNodeRef } = useDroppable({ id });
-  const colorClasses = {
-    red: 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700',
-    yellow: 'bg-yellow-50 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700',
-    green: 'bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-700',
+  
+  const colorConfig = {
+    red: {
+      header: 'bg-red-500',
+      headerText: 'text-white',
+      body: 'bg-red-50 dark:bg-gray-800',
+      border: 'border-red-200 dark:border-red-800',
+      badge: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200',
+      empty: 'text-red-400 dark:text-red-500',
+    },
+    yellow: {
+      header: 'bg-amber-500',
+      headerText: 'text-white',
+      body: 'bg-amber-50 dark:bg-gray-800',
+      border: 'border-amber-200 dark:border-amber-800',
+      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200',
+      empty: 'text-amber-400 dark:text-amber-500',
+    },
+    green: {
+      header: 'bg-emerald-500',
+      headerText: 'text-white',
+      body: 'bg-emerald-50 dark:bg-gray-800',
+      border: 'border-emerald-200 dark:border-emerald-800',
+      badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200',
+      empty: 'text-emerald-400 dark:text-emerald-500',
+    },
   };
+
+  const config = colorConfig[color];
 
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-lg border-2 ${colorClasses[color]} p-4 ${isOver ? 'drop-zone-active' : ''}`}
+      className={`rounded-xl shadow-lg overflow-hidden border ${config.border} transition-all duration-200 ${
+        isOver ? 'ring-2 ring-blue-400 ring-offset-2 scale-[1.02]' : ''
+      }`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">{title}</h3>
-        <span className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
-          {items.length}
-        </span>
+      {/* Column Header */}
+      <div className={`${config.header} px-4 py-3`}>
+        <div className="flex items-center justify-between">
+          <h3 className={`font-semibold text-lg ${config.headerText}`}>{title}</h3>
+          <span className={`text-sm font-bold px-3 py-1 rounded-full ${config.badge}`}>
+            {items.length}
+          </span>
+        </div>
       </div>
 
-      <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3 min-h-[200px]">
-          {items.map((item) => (
-            <SortableIssueCard key={item.id} issue={item} />
-          ))}
-        </div>
-      </SortableContext>
+      {/* Column Body */}
+      <div className={`${config.body} p-4`}>
+        <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3 min-h-[250px]">
+            {items.length === 0 ? (
+              <div className={`flex flex-col items-center justify-center h-[200px] ${config.empty}`}>
+                <svg className="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <p className="text-sm font-medium">Κανένα issue</p>
+                <p className="text-xs opacity-75">Σύρετε issues εδώ</p>
+              </div>
+            ) : (
+              items.map((item) => (
+                <SortableIssueCard key={item.id} issue={item} />
+              ))
+            )}
+          </div>
+        </SortableContext>
+      </div>
     </div>
   );
 };
@@ -257,44 +299,93 @@ const SortableIssueCard = ({ issue }) => {
 
 const IssueCard = ({ issue, isDragging = false }) => {
   const severityConfig = {
-    critical: { icon: '🔴', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900' },
-    high: { icon: '🟠', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900' },
-    medium: { icon: '🟡', color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900' },
-    low: { icon: '🟢', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900' },
+    critical: { 
+      icon: '🔴', 
+      color: 'text-red-700 dark:text-red-300', 
+      bg: 'bg-red-100 dark:bg-red-900/50',
+      border: 'border-l-red-500',
+    },
+    high: { 
+      icon: '🟠', 
+      color: 'text-orange-700 dark:text-orange-300', 
+      bg: 'bg-orange-100 dark:bg-orange-900/50',
+      border: 'border-l-orange-500',
+    },
+    medium: { 
+      icon: '🟡', 
+      color: 'text-yellow-700 dark:text-yellow-300', 
+      bg: 'bg-yellow-100 dark:bg-yellow-900/50',
+      border: 'border-l-yellow-500',
+    },
+    low: { 
+      icon: '🟢', 
+      color: 'text-green-700 dark:text-green-300', 
+      bg: 'bg-green-100 dark:bg-green-900/50',
+      border: 'border-l-green-500',
+    },
   };
 
   const config = severityConfig[issue.severity] || severityConfig.medium;
 
   return (
     <div
-      className={`card p-4 cursor-move hover:shadow-lg transition-shadow ${
-        isDragging ? 'dragging' : ''
-      } ${issue.severity === 'critical' ? 'border-2 border-red-500 animate-pulse-border' : ''}`}
+      className={`
+        bg-white dark:bg-gray-700 rounded-lg p-4 
+        border-l-4 ${config.border}
+        shadow-sm hover:shadow-md 
+        cursor-grab active:cursor-grabbing
+        transition-all duration-200
+        ${isDragging ? 'shadow-xl rotate-2 scale-105' : ''}
+        ${issue.severity === 'critical' ? 'ring-2 ring-red-400 ring-opacity-50' : ''}
+      `}
     >
-      <div className="flex items-start justify-between mb-2">
-        <span className={`text-xs font-semibold px-2 py-1 rounded ${config.bg} ${config.color}`}>
-          {config.icon} {issue.severity.toUpperCase()}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${config.bg} ${config.color}`}>
+          {config.icon} {issue.severity?.toUpperCase()}
         </span>
-        <span className="text-xs text-gray-500">#{issue.id}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">#{issue.id}</span>
       </div>
 
-      <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{issue.title}</h4>
+      {/* Title */}
+      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+        {issue.title}
+      </h4>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-        {issue.description}
-      </p>
+      {/* Description */}
+      {issue.description && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+          {issue.description}
+        </p>
+      )}
 
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span className="capitalize">{issue.category}</span>
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-600">
+        <div className="flex items-center gap-2">
+          {issue.category && (
+            <span className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded capitalize">
+              {issue.category}
+            </span>
+          )}
+        </div>
+        
         {issue.assigned_to_name && (
-          <div className="flex items-center">
-            <span className="mr-1">👤</span>
-            <span>{issue.assigned_to_name}</span>
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 dark:text-blue-300 text-[10px] font-bold">
+                {issue.assigned_to_name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span className="truncate max-w-[80px]">{issue.assigned_to_name}</span>
           </div>
         )}
       </div>
 
-      <div className="text-xs text-gray-400 mt-2">
+      {/* Date */}
+      <div className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
         {new Date(issue.created_at).toLocaleDateString('el-GR')}
       </div>
     </div>
