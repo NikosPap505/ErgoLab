@@ -9,12 +9,32 @@ class WebSocketService {
     this.heartbeatInterval = null;
   }
 
+  /**
+   * Derives WebSocket URL from API URL
+   * Converts http:// to ws:// and https:// to wss://
+   */
+  getWebSocketUrl() {
+    // Use explicit WS URL if provided
+    if (import.meta.env.VITE_WS_URL) {
+      return import.meta.env.VITE_WS_URL;
+    }
+
+    // Derive from API URL
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
+    // Convert http(s):// to ws(s)://
+    if (apiUrl.startsWith('https://')) {
+      return apiUrl.replace('https://', 'wss://');
+    }
+    return apiUrl.replace('http://', 'ws://');
+  }
+
   connect(token) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       return;
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+    const wsUrl = this.getWebSocketUrl();
 
     this.ws = new WebSocket(`${wsUrl.replace(/\/$/, '')}/ws/${token}`);
 
