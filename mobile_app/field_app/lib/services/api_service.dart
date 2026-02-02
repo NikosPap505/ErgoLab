@@ -336,4 +336,76 @@ class ApiService {
       rethrow;
     }
   }
+
+  /// Syncs a single worker attendance record to the backend
+  /// Returns true if sync was successful
+  Future<bool> syncWorkerAttendance({
+    required int workerId,
+    required String action,
+    required DateTime timestamp,
+    String? notes,
+  }) async {
+    try {
+      await _dio.post(
+        '/api/workers/$workerId/attendance',
+        data: {
+          'action': action,
+          'timestamp': timestamp.toIso8601String(),
+          if (notes != null) 'notes': notes,
+        },
+      );
+      return true;
+    } catch (e) {
+      debugPrint('Sync worker attendance error: $e');
+      return false;
+    }
+  }
+
+  /// Syncs multiple worker attendance records in bulk
+  /// Returns a map of local_id -> sync_status
+  Future<Map<int, bool>> bulkSyncWorkerAttendance(
+    List<Map<String, dynamic>> records,
+  ) async {
+    final results = <int, bool>{};
+    
+    try {
+      // Try bulk sync first
+      final response = await _dio.post(
+        '/api/workers/attendance/bulk-sync',
+        data: {
+          'records': records.map((r) => {
+            'worker_id': r['worker_id'],
+            'action': r['action'],
+            'timestamp': r['timestamp'],
+            if (r['notes'] != null) 'notes': r['notes'],
+          }).toList(),
+        },
+      );
+      
+      // Parse bulk response
+      final data = response.data as Map<String, dynamic>;
+      final syncedIds = (data['synced_ids'] as List?)?.cast<int>() ?? [];
+      
+      for (var i = 0; i < records.length; i++) {
+        final localId = records[i]['id'] as int;
+        results[localId] = syncedIds.contains(i);
+      }
+    } catch (e) {
+      debugPrint('Bulk sync failed, falling back to individual sync: $e');
+      
+      // Fallback to individual sync
+      for (final record in records) {
+        final localId = record['id'] as int;
+        final success = await syncWorkerAttendance(
+          workerId: record['worker_id'] as int,
+          action: record['action'] as String,
+          timestamp: DateTime.parse(record['timestamp'] as String),
+          notes: record['notes'] as String?,
+        );
+        results[localId] = success;
+      }
+    }
+    
+    return results;
+  }
 }
