@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 import '../services/sync_service.dart';
@@ -196,6 +197,8 @@ class AppState with ChangeNotifier {
   void dispose() {
     _connectivityService.dispose();
     _syncService.dispose();
+    _apiService.dispose();
+    unawaited(OfflineDatabase.close());
     super.dispose();
   }
 }

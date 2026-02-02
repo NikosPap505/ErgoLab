@@ -13,6 +13,7 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen> {
   List<dynamic> _inventory = [];
+  List<dynamic> _filteredInventory = [];
   bool _isLoading = true;
   bool _isOfflineData = false;
   String _searchQuery = '';
@@ -71,6 +72,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (mounted) {
       setState(() {
         _inventory = inventory;
+        _applyFilter();
         _isLoading = false;
         _isOfflineData = isOffline;
       });
@@ -83,14 +85,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return cached;
   }
 
-  List<dynamic> get _filteredInventory {
-    if (_searchQuery.isEmpty) return _inventory;
-    
-    return _inventory.where((item) {
+  void _applyFilter() {
+    if (_searchQuery.trim().isEmpty) {
+      _filteredInventory = _inventory;
+      return;
+    }
+
+    final query = _searchQuery.toLowerCase();
+    _filteredInventory = _inventory.where((item) {
       final material = item['material'] ?? {};
       final name = material['name']?.toString().toLowerCase() ?? '';
       final sku = material['sku']?.toString().toLowerCase() ?? '';
-      final query = _searchQuery.toLowerCase();
       
       return name.contains(query) || sku.contains(query);
     }).toList();
@@ -248,6 +253,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           _searchController.clear();
                           setState(() {
                             _searchQuery = '';
+                            _applyFilter();
                           });
                         },
                       )
@@ -261,6 +267,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
+                  _applyFilter();
                 });
               },
             ),
@@ -321,7 +328,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
-                                  color: _getStockLevelColor(quantity, minStock).withAlpha(77),
+                                  color: _getStockLevelColor(quantity, minStock).withValues(alpha: 0.3),
                                   width: 1,
                                 ),
                               ),

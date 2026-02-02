@@ -23,6 +23,7 @@ dependencies:
   
   # Storage
   shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.2.2
   sqflite: ^2.3.0
   path_provider: ^2.1.1
   path: ^1.8.3
@@ -38,6 +39,7 @@ dependencies:
   firebase_core: ^2.24.2
   firebase_messaging: ^14.7.9
   flutter_local_notifications: ^16.3.0
+  firebase_crashlytics: ^3.5.7
   
   # Camera
   camera: ^0.10.5+7
@@ -61,7 +63,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: true
+  ios: false
   image_path: "assets/icon.png"
 
 flutter:

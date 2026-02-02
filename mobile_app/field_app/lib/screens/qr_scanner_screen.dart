@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/qr_service.dart';
@@ -16,12 +18,27 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   late final QRService _qrService;
   final MobileScannerController cameraController = MobileScannerController();
   bool _isProcessing = false;
+  bool _cameraReady = false;
+  bool _isDisposed = false;
+  Timer? _restartTimer;
 
   @override
   void initState() {
     super.initState();
     final apiService = context.read<AppState>().apiService;
     _qrService = QRService(apiService: apiService);
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    final granted = await _ensureCameraPermission();
+    if (!mounted) return;
+    setState(() {
+      _cameraReady = granted;
+    });
+    if (granted) {
+      await cameraController.start();
+    }
   }
 
   @override
@@ -55,7 +72,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           MobileScanner(
             controller: cameraController,
             onDetect: (capture) {
-              if (_isProcessing) return;
+              if (_isProcessing || !_cameraReady) return;
 
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
@@ -114,19 +131,21 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   Future<void> _handleQRCode(String rawValue) async {
+    if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
     try {
+      await cameraController.stop();
       final result = await _qrService.handleScan(rawValue);
-
-      cameraController.stop();
-
       if (!mounted) return;
 
-      if (result['type'] == 'material') {
-        _showMaterialDetail(result['data']);
-      } else if (result['type'] == 'worker') {
-        _showWorkerDetail(result['data']);
+      final type = result['type'];
+      final data = result['data'];
+
+      if (type == 'material' && data is Map<String, dynamic>) {
+        _showMaterialDetail(data);
+      } else if (type == 'worker' && data is Map<String, dynamic>) {
+        _showWorkerDetail(data);
       } else {
         _showError('Μη υποστηριζόμενο QR code');
       }
@@ -152,7 +171,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         },
         onTransaction: () {
           Navigator.pop(context);
-          _navigateToStockTransaction(materialData['id'] as int);
+          final id = _parseId(materialData['id']);
+          if (id != null) {
+            _navigateToStockTransaction(id);
+          } else {
+            _showError('Μη έγκυρα δεδομένα υλικού');
+          }
         },
       ),
     );
@@ -162,13 +186,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(workerData['full_name'] ?? 'Worker'),
+        title: Text(workerData['full_name']?.toString() ?? 'Worker'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Username: ${workerData['username']}'),
-            Text('Role: ${workerData['role']}'),
+            Text('Username: ${workerData['username'] ?? '-'}'),
+            Text('Role: ${workerData['role'] ?? '-'}'),
             const SizedBox(height: 20),
             const Text('Τι θέλετε να κάνετε;'),
           ],
@@ -184,7 +208,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _handleWorkerCheckIn(workerData['id'] as int);
+              final id = _parseId(workerData['id']);
+              if (id != null) {
+                _handleWorkerCheckIn(id);
+              } else {
+                _showError('Μη έγκυρα δεδομένα εργαζομένου');
+              }
             },
             child: const Text('Check In'),
           ),
@@ -201,8 +230,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       ),
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
+    _restartTimer?.cancel();
+    _restartTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted && !_isDisposed) {
         cameraController.start();
       }
     });
@@ -225,7 +255,58 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _restartTimer?.cancel();
+    cameraController.stop();
     cameraController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _ensureCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied) {
+      if (!mounted) return false;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Άδεια κάμερας'),
+          content: const Text(
+            'Η πρόσβαση στην κάμερα έχει απενεργοποιηθεί. Ενεργοποιήστε την από τις Ρυθμίσεις.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Άκυρο'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('Ρυθμίσεις'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Η άδεια κάμερας απαιτείται για σάρωση QR.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+    return false;
+  }
+
+  int? _parseId(dynamic id) {
+    if (id is int) return id;
+    if (id is String) return int.tryParse(id);
+    return null;
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,6 +16,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
@@ -22,6 +24,9 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   final ApiService _apiService = ApiService();
+  bool _notificationsEnabled = false;
+
+  bool get notificationsEnabled => _notificationsEnabled;
 
   Future<void> initialize() async {
     await Firebase.initializeApp();
@@ -34,9 +39,13 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      _notificationsEnabled = false;
       debugPrint('Notification permission denied');
+      _showPermissionDeniedMessage();
       return;
     }
+
+    _notificationsEnabled = true;
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
@@ -105,10 +114,15 @@ class NotificationService {
 
   Future<void> _registerToken(String token) async {
     try {
+      final deviceType = Platform.isIOS
+          ? 'ios'
+          : Platform.isAndroid
+              ? 'android'
+              : Platform.operatingSystem;
       await _apiService.registerDeviceToken(
         token: token,
-        deviceType: 'android',
-        deviceName: 'Android Device',
+        deviceType: deviceType,
+        deviceName: Platform.operatingSystem,
       );
       debugPrint('FCM token registered');
     } catch (e) {
@@ -175,7 +189,32 @@ class NotificationService {
   }
 
   void _navigateToScreen(Map<String, dynamic> data) {
-    debugPrint('Navigate to: ${data['screen']} with data: $data');
+    final route = data['screen']?.toString();
+    final navigator = navigatorKey.currentState;
+
+    if (navigator == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _navigateToScreen(data));
+      return;
+    }
+
+    if (route == null || route.isEmpty) {
+      debugPrint('Navigate: missing route for data: $data');
+      return;
+    }
+
+    navigator.pushNamed(route, arguments: data);
+  }
+
+  void _showPermissionDeniedMessage() {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Οι ειδοποιήσεις είναι απενεργοποιημένες. Ενεργοποιήστε τις από τις Ρυθμίσεις.'),
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> unregister() async {

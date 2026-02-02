@@ -52,6 +52,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
 
     final appState = context.read<AppState>();
@@ -71,12 +72,38 @@ class _AddStockScreenState extends State<AddStockScreen> {
       _isSubmitting = true;
     });
 
+    final quantity = int.parse(_quantityController.text);
+    if (_transactionType == 'out') {
+      final cached = await OfflineDatabase.getCachedInventory(appState.selectedWarehouseId!);
+      final item = cached.firstWhere(
+        (i) => (i['material_id'] ?? i['material']?['id']) == _selectedMaterialId,
+        orElse: () => {},
+      );
+      if (item.isNotEmpty) {
+        final available = item['quantity'] ?? 0;
+        if (quantity > available) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Μη επαρκές απόθεμα. Διαθέσιμα: $available'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isSubmitting = false;
+          });
+          return;
+        }
+      }
+    }
+
     // Use offline-first transaction method
     final success = await appState.addStockTransaction(
       warehouseId: appState.selectedWarehouseId!,
       materialId: _selectedMaterialId!,
       transactionType: _transactionType,
-      quantity: int.parse(_quantityController.text),
+      quantity: quantity,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
     );
 

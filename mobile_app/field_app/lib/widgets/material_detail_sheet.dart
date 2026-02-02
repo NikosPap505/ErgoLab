@@ -14,6 +14,15 @@ class MaterialDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = materialData['name']?.toString() ?? '-';
+    final sku = materialData['sku']?.toString() ?? '-';
+    final category = materialData['category']?.toString() ?? '-';
+    final unit = materialData['unit']?.toString() ?? '-';
+    final costValue = materialData['cost'];
+    final cost = _formatCost(costValue);
+    final stocks = materialData['stocks'];
+    final stockList = stocks is List ? stocks : const [];
+
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.4,
@@ -60,14 +69,14 @@ class MaterialDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          materialData['name'],
+                          name,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          'SKU: ${materialData['sku']}',
+                          'SKU: $sku',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -89,10 +98,11 @@ class MaterialDetailSheet extends StatelessWidget {
                   controller: scrollController,
                   children: [
                     _buildInfoRow('Κατηγορία', materialData['category'] ?? '-'),
-                    _buildInfoRow('Μονάδα', materialData['unit'] ?? '-'),
+                    _buildInfoRow('Κατηγορία', category),
+                    _buildInfoRow('Μονάδα', unit),
                     _buildInfoRow(
                       'Κόστος',
-                      '€${(materialData['cost'] ?? 0).toStringAsFixed(2)}',
+                      cost,
                     ),
                     const SizedBox(height: 20),
 
@@ -105,18 +115,18 @@ class MaterialDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    if (materialData['stocks'] != null)
+                    if (stockList.isNotEmpty)
                       ...List.generate(
-                        materialData['stocks'].length,
+                        stockList.length,
                         (index) {
-                          final stock = materialData['stocks'][index];
+                          final stock = stockList[index] as Map<String, dynamic>? ?? {};
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               leading: const Icon(Icons.warehouse),
-                              title: Text(stock['warehouse_name'] ?? '-'),
+                              title: Text(stock['warehouse_name']?.toString() ?? '-'),
                               trailing: Text(
-                                '${stock['quantity']} ${materialData['unit'] ?? ''}',
+                                '${stock['quantity'] ?? '-'} $unit',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -187,5 +197,18 @@ class MaterialDetailSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatCost(dynamic costValue) {
+    if (costValue is num) {
+      return '€${costValue.toStringAsFixed(2)}';
+    }
+    if (costValue is String) {
+      final parsed = num.tryParse(costValue);
+      if (parsed != null) {
+        return '€${parsed.toStringAsFixed(2)}';
+      }
+    }
+    return '-';
   }
 }

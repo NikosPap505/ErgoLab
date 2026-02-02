@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 class OfflineDatabase {
   static Database? _database;
+  static const int _dbVersion = 1;
 
   static Future<Database> get database async {
     _database ??= await _initDatabase();
@@ -17,8 +18,9 @@ class OfflineDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: _dbVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -98,6 +100,20 @@ class OfflineDatabase {
         UNIQUE(warehouse_id, material_id)
       )
     ''');
+  }
+
+  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Future schema migrations go here.
+    // Example:
+    // if (oldVersion < 2) { await db.execute('ALTER TABLE ...'); }
+  }
+
+  static Future<void> close() async {
+    final db = _database;
+    if (db != null && db.isOpen) {
+      await db.close();
+      _database = null;
+    }
   }
 
   // === Pending Transactions ===

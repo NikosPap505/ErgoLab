@@ -12,6 +12,7 @@ class ImageCompressionService {
   static const int maxHeight = 1920;
   static const int quality = 85;
   static const int thumbnailSize = 200;
+  static const Duration _tempRetention = Duration(days: 7);
 
   /// Compress an image file for upload
   /// Returns the path to the compressed file
@@ -48,6 +49,7 @@ class ImageCompressionService {
 
       // Save to temp directory
       final tempDir = await getTemporaryDirectory();
+      await _cleanupTempFiles(tempDir);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final compressedPath = path.join(tempDir.path, 'compressed_$timestamp.jpg');
       
@@ -84,6 +86,7 @@ class ImageCompressionService {
 
       // Save thumbnail
       final tempDir = await getTemporaryDirectory();
+      await _cleanupTempFiles(tempDir);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final thumbnailPath = path.join(tempDir.path, 'thumb_$timestamp.jpg');
       
@@ -136,6 +139,25 @@ class ImageCompressionService {
   // Helper to decode image in isolate
   static img.Image? _decodeImage(Uint8List bytes) {
     return img.decodeImage(bytes);
+  }
+
+  static Future<void> _cleanupTempFiles(Directory tempDir) async {
+    try {
+      final cutoff = DateTime.now().subtract(_tempRetention);
+      await for (final entity in tempDir.list()) {
+        if (entity is! File) continue;
+        final name = path.basename(entity.path);
+        if (!name.startsWith('compressed_') && !name.startsWith('thumb_')) {
+          continue;
+        }
+        final stat = await entity.stat();
+        if (stat.modified.isBefore(cutoff)) {
+          await entity.delete();
+        }
+      }
+    } catch (e) {
+      debugPrint('Temp cleanup error: $e');
+    }
   }
 
   // Format file size for logging

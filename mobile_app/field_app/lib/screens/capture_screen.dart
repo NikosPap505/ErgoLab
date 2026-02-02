@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/connectivity_service.dart';
@@ -32,6 +33,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   Future<void> _captureImage(ImageSource source) async {
     try {
+      if (source == ImageSource.camera) {
+        final granted = await _ensureCameraPermission();
+        if (!granted) return;
+      }
       final XFile? image = await _picker.pickImage(
         source: source,
         maxWidth: 1920,
@@ -45,9 +50,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
           _isCompressing = true;
           // Auto-generate title from timestamp
           if (_titleController.text.isEmpty) {
-            final now = DateTime.now();
-            _titleController.text =
-                'Φωτο_${now.day}-${now.month}-${now.year}_${now.hour}${now.minute}';
+            _titleController.text = _buildTimestampTitle();
           }
         });
         
@@ -126,6 +129,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
       success = true;
     }
 
+    if (success) {
+      await _cleanupLocalFiles();
+    }
+
     if (mounted) {
       setState(() {
         _isUploading = false;
@@ -163,6 +170,83 @@ class _CaptureScreenState extends State<CaptureScreen> {
           ),
         );
       }
+    }
+  }
+
+  String _buildTimestampTitle() {
+    final now = DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = now.year.toString();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    return 'Φωτο_${day}-${month}-${year}_${hour}${minute}';
+  }
+
+  Future<bool> _ensureCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied) {
+      if (!mounted) return false;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Άδεια κάμερας'),
+          content: const Text(
+            'Η πρόσβαση στην κάμερα έχει απενεργοποιηθεί. Ενεργοποιήστε την από τις Ρυθμίσεις.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Άκυρο'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('Ρυθμίσεις'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Η άδεια κάμερας απαιτείται για λήψη φωτογραφίας.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+    return false;
+  }
+
+  Future<void> _cleanupLocalFiles() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = tempDir.path;
+
+      if (_compressedPath != null) {
+        final file = File(_compressedPath!);
+        if (await file.exists()) {
+          await file.delete();
+        }
+        _compressedPath = null;
+      }
+
+      final capturedPath = _capturedImage?.path;
+      if (capturedPath != null && capturedPath.startsWith(tempPath)) {
+        final file = File(capturedPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+    } catch (e) {
+      debugPrint('Cleanup error: $e');
     }
   }
 

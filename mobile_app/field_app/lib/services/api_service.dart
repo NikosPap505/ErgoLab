@@ -1,12 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.2.8:8000';
-  // For physical device: 'http://YOUR_LOCAL_IP:8000'
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'http://192.168.2.8:8000',
+  );
+  // For physical device: set --dart-define=API_URL=http://YOUR_LOCAL_IP:8000
   
   final Dio _dio = Dio();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String? _token;
 
   // Getter for token (used by AppState)
@@ -33,9 +37,12 @@ class ApiService {
     );
   }
 
+  void dispose() {
+    _dio.close(force: true);
+  }
+
   Future<void> loadToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
+    _token = await _secureStorage.read(key: 'auth_token');
   }
 
   Future<bool> login(String email, String password) async {
@@ -53,8 +60,7 @@ class ApiService {
 
       _token = response.data['access_token'];
       
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', _token!);
+      await _secureStorage.write(key: 'auth_token', value: _token!);
       
       return true;
     } catch (e) {
@@ -181,8 +187,7 @@ class ApiService {
 
   Future<void> logout() async {
     _token = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await _secureStorage.delete(key: 'auth_token');
   }
 
   Future<Map<String, dynamic>> handleQrScan(Map<String, dynamic> payload) async {

@@ -17,6 +17,11 @@
 *.crt
 *.cer
 *.der
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_options.dart
+**/*.keystore
+**/keystore.properties
 backend/firebase-credentials.json
 secrets/
 .secrets/

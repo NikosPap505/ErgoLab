@@ -10,6 +10,16 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final fullName = appState.currentUser?['full_name']?.toString() ?? '';
+    final initials = fullName.isNotEmpty ? fullName.substring(0, 1) : 'U';
+    final projectIds = appState.projects.map<int>((p) => p['id'] as int).toList();
+    final warehouseIds = appState.warehouses.map<int>((w) => w['id'] as int).toList();
+    final selectedProjectId = projectIds.contains(appState.selectedProjectId)
+      ? appState.selectedProjectId
+      : null;
+    final selectedWarehouseId = warehouseIds.contains(appState.selectedWarehouseId)
+      ? appState.selectedWarehouseId
+      : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: Colors.blue,
                     child: Text(
-                      appState.currentUser?['full_name']?.substring(0, 1) ?? 'U',
+                      initials,
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -126,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.construction),
                     ),
-                    initialValue: appState.selectedProjectId,
+                    initialValue: selectedProjectId,
                     items: appState.projects.map<DropdownMenuItem<int>>((project) {
                       return DropdownMenuItem<int>(
                         value: project['id'],
@@ -147,7 +157,7 @@ class HomeScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.warehouse),
                     ),
-                    initialValue: appState.selectedWarehouseId,
+                    initialValue: selectedWarehouseId,
                     items: appState.warehouses.map<DropdownMenuItem<int>>((warehouse) {
                       return DropdownMenuItem<int>(
                         value: warehouse['id'],

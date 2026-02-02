@@ -27,7 +27,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     try {
       final api = context.read<AppState>().apiService;
       final prefs = await api.getNotificationPreferences();
-
+      if (!mounted) return;
       setState(() {
         dailyReports = prefs['push_daily_reports'] == true;
         issueUpdates = prefs['push_issue_assigned'] == true;
@@ -36,10 +36,17 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         pushEnabled = dailyReports || issueUpdates || lowStockAlerts || projectUpdates;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Αποτυχία φόρτωσης ρυθμίσεων.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -131,6 +138,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   }
 
   Future<void> _updatePreferences() async {
+    final prevPushEnabled = pushEnabled;
+    final prevDailyReports = dailyReports;
+    final prevIssueUpdates = issueUpdates;
+    final prevLowStockAlerts = lowStockAlerts;
+    final prevProjectUpdates = projectUpdates;
     try {
       final api = context.read<AppState>().apiService;
       await api.updateNotificationPreferences({
@@ -139,6 +151,21 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         'push_low_stock': lowStockAlerts,
         'push_budget_alerts': projectUpdates,
       });
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        pushEnabled = prevPushEnabled;
+        dailyReports = prevDailyReports;
+        issueUpdates = prevIssueUpdates;
+        lowStockAlerts = prevLowStockAlerts;
+        projectUpdates = prevProjectUpdates;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Αποτυχία αποθήκευσης ρυθμίσεων.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

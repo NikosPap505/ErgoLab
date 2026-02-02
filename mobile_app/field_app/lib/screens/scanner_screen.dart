@@ -19,6 +19,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   void dispose() {
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }
@@ -65,7 +66,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
           );
         }
         
-        Navigator.of(context).pushReplacementNamed(
+        await _controller.stop();
+        Navigator.of(context).pushNamed(
           '/add-stock',
           arguments: material,
         );
