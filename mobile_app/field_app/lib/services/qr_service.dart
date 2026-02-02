@@ -57,4 +57,10 @@ class QRService {
     if (id is String) return int.tryParse(id);
     return null;
   }
+
+  /// Cleanup method for proper disposal pattern
+  void dispose() {
+    // Currently stateless, but method exists for future cleanup
+    // and to satisfy the dispose pattern in widgets
+  }
 }

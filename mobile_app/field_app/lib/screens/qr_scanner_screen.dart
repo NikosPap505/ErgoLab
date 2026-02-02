@@ -380,6 +380,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     _restartTimer?.cancel();
     cameraController.stop();
     cameraController.dispose();
+    // QRService cleanup (stateless, but mark as disposed)
+    _qrService.dispose();
     super.dispose();
   }
 

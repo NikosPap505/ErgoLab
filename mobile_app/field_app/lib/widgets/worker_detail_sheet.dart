@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/offline_database.dart';
+import '../l10n/app_localizations.dart';
 
 /// Widget displaying worker details with check-in/check-out functionality.
 /// Attendance is stored locally and synced when backend supports it.
@@ -67,6 +68,12 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
 
     setState(() => _isLoading = true);
 
+    // Capture localized strings before async gap
+    final l10n = AppLocalizations.of(context);
+    final checkInText = l10n.checkedIn;
+    final checkOutText = l10n.checkedOut;
+    final errorText = l10n.errorOccurred;
+
     try {
       await OfflineDatabase.recordWorkerAttendance(
         workerId: workerId,
@@ -80,14 +87,16 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              action == 'check_in' ? 'Check-in καταγράφηκε!' : 'Check-out καταγράφηκε!',
+              action == 'check_in' ? '$checkInText!' : '$checkOutText!',
             ),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
-      _showError('Σφάλμα: $e');
+      if (mounted) {
+        _showError('$errorText: $e');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -103,7 +112,8 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final fullName = widget.workerData['full_name']?.toString() ?? 'Εργαζόμενος';
+    final l10n = AppLocalizations.of(context);
+    final fullName = widget.workerData['full_name']?.toString() ?? l10n.worker;
     final username = widget.workerData['username']?.toString() ?? '-';
     final role = widget.workerData['role']?.toString() ?? '-';
     final email = widget.workerData['email']?.toString();
@@ -229,19 +239,19 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildInfoCard([
-                      _buildInfoRow(Icons.badge, 'Ρόλος', role),
+                      _buildInfoRow(Icons.badge, l10n.role, role),
                       if (email != null && email.isNotEmpty)
-                        _buildInfoRow(Icons.email, 'Email', email),
+                        _buildInfoRow(Icons.email, l10n.email, email),
                       if (phone != null && phone.isNotEmpty)
-                        _buildInfoRow(Icons.phone, 'Τηλέφωνο', phone),
+                        _buildInfoRow(Icons.phone, l10n.phone, phone),
                     ]),
                     const SizedBox(height: 20),
 
                     // Recent history
                     if (_recentHistory.isNotEmpty) ...[
-                      const Text(
-                        'Πρόσφατο Ιστορικό',
-                        style: TextStyle(
+                      Text(
+                        l10n.recentHistory,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -264,7 +274,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Οι εγγραφές αποθηκεύονται τοπικά και θα συγχρονιστούν όταν είναι διαθέσιμο.',
+                              l10n.localStorageNote,
                               style: TextStyle(fontSize: 12, color: Colors.blue[700]),
                             ),
                           ),
@@ -285,7 +295,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                   child: OutlinedButton.icon(
                     onPressed: widget.onClose,
                     icon: const Icon(Icons.close),
-                    label: const Text('Κλείσιμο'),
+                    label: Text(l10n.close),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -304,7 +314,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.login),
-                      label: const Text('Check In'),
+                      label: Text(l10n.checkIn),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: Colors.green,
@@ -323,7 +333,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.logout),
-                      label: const Text('Check Out'),
+                      label: Text(l10n.checkOut),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: Colors.orange,

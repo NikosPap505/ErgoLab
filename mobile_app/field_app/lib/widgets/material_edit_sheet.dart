@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../l10n/app_localizations.dart';
 
 /// Editable bottom sheet for material details.
 /// Allows editing name, category, unit, cost, and min_stock.
@@ -75,8 +76,23 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
   }
 
   Future<void> _saveChanges() async {
+    final l10n = AppLocalizations.of(context);
+    
     if (_nameController.text.trim().isEmpty) {
-      setState(() => _errorMessage = 'Το όνομα είναι υποχρεωτικό');
+      setState(() => _errorMessage = l10n.nameRequired);
+      return;
+    }
+
+    final cost = num.tryParse(_costController.text);
+    final minStock = int.tryParse(_minStockController.text);
+
+    // Validate non-negative values
+    if (cost != null && cost < 0) {
+      setState(() => _errorMessage = l10n.costNegativeError);
+      return;
+    }
+    if (minStock != null && minStock < 0) {
+      setState(() => _errorMessage = l10n.minStockNegativeError);
       return;
     }
 
@@ -85,6 +101,10 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
       _errorMessage = null;
     });
 
+    // Capture l10n strings before async gap
+    final materialUpdatedText = l10n.materialUpdated;
+    final saveFailedText = l10n.saveFailed;
+
     try {
       final materialId = widget.materialData['id'];
       if (materialId == null) {
@@ -92,8 +112,6 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
       }
 
       final apiService = context.read<AppState>().apiService;
-      final cost = num.tryParse(_costController.text);
-      final minStock = int.tryParse(_minStockController.text);
 
       final result = await apiService.updateMaterial(
         materialId: materialId is int ? materialId : int.parse(materialId.toString()),
@@ -112,19 +130,19 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
 
       if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Το υλικό ενημερώθηκε επιτυχώς'),
+          SnackBar(
+            content: Text(materialUpdatedText),
             backgroundColor: Colors.green,
           ),
         );
         widget.onSaved?.call(result);
         widget.onClose();
       } else {
-        setState(() => _errorMessage = 'Αποτυχία αποθήκευσης');
+        setState(() => _errorMessage = saveFailedText);
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = 'Σφάλμα: $e');
+        setState(() => _errorMessage = '${l10n.errorOccurred}: $e');
       }
     } finally {
       if (mounted) {
@@ -135,6 +153,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final sku = widget.materialData['sku']?.toString() ?? '-';
 
     return DraggableScrollableSheet(
@@ -184,9 +203,9 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Επεξεργασία Υλικού',
-                          style: TextStyle(
+                        Text(
+                          l10n.editMaterial,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -242,13 +261,13 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                     children: [
                       _buildTextField(
                         controller: _nameController,
-                        label: 'Όνομα *',
+                        label: '${l10n.material} *',
                         icon: Icons.label,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _categoryController,
-                        label: 'Κατηγορία',
+                        label: l10n.category,
                         icon: Icons.category,
                       ),
                       const SizedBox(height: 16),
@@ -257,7 +276,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                           Expanded(
                             child: _buildTextField(
                               controller: _unitController,
-                              label: 'Μονάδα',
+                              label: l10n.unit,
                               icon: Icons.straighten,
                             ),
                           ),
@@ -265,7 +284,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                           Expanded(
                             child: _buildTextField(
                               controller: _costController,
-                              label: 'Κόστος (€)',
+                              label: l10n.costLabel,
                               icon: Icons.euro,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             ),
@@ -275,7 +294,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _minStockController,
-                        label: 'Ελάχιστο Απόθεμα',
+                        label: l10n.minStock,
                         icon: Icons.warning_amber,
                         keyboardType: TextInputType.number,
                       ),
@@ -293,7 +312,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                     child: OutlinedButton.icon(
                       onPressed: _isLoading ? null : widget.onClose,
                       icon: const Icon(Icons.close),
-                      label: const Text('Άκυρο'),
+                      label: Text(l10n.cancel),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -314,7 +333,7 @@ class _MaterialEditSheetState extends State<MaterialEditSheet> {
                               ),
                             )
                           : const Icon(Icons.save),
-                      label: Text(_isLoading ? 'Αποθήκευση...' : 'Αποθήκευση'),
+                      label: Text(_isLoading ? l10n.saving : l10n.save),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Colors.orange,

@@ -121,6 +121,37 @@ class AppLocalizations {
   String get transactionSuccess => _get('transactionSuccess');
   String get transactionFailed => _get('transactionFailed');
 
+  // Material Edit Sheet
+  String get nameRequired => _get('nameRequired');
+  String get costNegativeError => _get('costNegativeError');
+  String get minStockNegativeError => _get('minStockNegativeError');
+  String get materialUpdated => _get('materialUpdated');
+  String get saveFailed => _get('saveFailed');
+  String get saving => _get('saving');
+  String get costLabel => _get('costLabel');
+
+  // Worker Detail Sheet
+  String get role => _get('role');
+  String get phone => _get('phone');
+  String get localStorageNote => _get('localStorageNote');
+
+  // Scan History Screen
+  String get loadingError => _get('loadingError');
+  String get deleted => _get('deleted');
+  String get deleteHistory => _get('deleteHistory');
+  String get deleteHistoryConfirm => _get('deleteHistoryConfirm');
+  String get historyDeleted => _get('historyDeleted');
+  String get deleteAll => _get('deleteAll');
+  String get noScanHistory => _get('noScanHistory');
+  String get scansWillAppearHere => _get('scansWillAppearHere');
+  String get error => _get('error');
+  String get scanDetails => _get('scanDetails');
+  String get date => _get('date');
+  String get type => _get('type');
+  String get result => _get('result');
+  String get qrBarcodeValue => _get('qrBarcodeValue');
+  String get data => _get('data');
+
   static const Map<String, Map<String, String>> _localizedValues = {
     'el': {
       'notificationSettings': 'Ρυθμίσεις Ειδοποιήσεων',
@@ -202,6 +233,34 @@ class AppLocalizations {
       'insufficientStock': 'Μη επαρκές απόθεμα',
       'transactionSuccess': 'Η συναλλαγή καταχωρήθηκε!',
       'transactionFailed': 'Αποτυχία καταχώρησης συναλλαγής',
+      // Material Edit Sheet
+      'nameRequired': 'Το όνομα είναι υποχρεωτικό',
+      'costNegativeError': 'Το κόστος δεν μπορεί να είναι αρνητικό',
+      'minStockNegativeError': 'Το ελάχιστο απόθεμα δεν μπορεί να είναι αρνητικό',
+      'materialUpdated': 'Το υλικό ενημερώθηκε επιτυχώς',
+      'saveFailed': 'Αποτυχία αποθήκευσης',
+      'saving': 'Αποθήκευση...',
+      'costLabel': 'Κόστος (€)',
+      // Worker Detail Sheet
+      'role': 'Ρόλος',
+      'phone': 'Τηλέφωνο',
+      'localStorageNote': 'Οι εγγραφές αποθηκεύονται τοπικά και θα συγχρονιστούν όταν είναι διαθέσιμο.',
+      // Scan History Screen
+      'loadingError': 'Σφάλμα φόρτωσης',
+      'deleted': 'Διαγράφηκε',
+      'deleteHistory': 'Διαγραφή Ιστορικού',
+      'deleteHistoryConfirm': 'Είστε σίγουροι ότι θέλετε να διαγράψετε όλο το ιστορικό σαρώσεων;',
+      'historyDeleted': 'Το ιστορικό διαγράφηκε',
+      'deleteAll': 'Διαγραφή όλων',
+      'noScanHistory': 'Δεν υπάρχει ιστορικό σαρώσεων',
+      'scansWillAppearHere': 'Οι σαρώσεις σας θα εμφανίζονται εδώ',
+      'error': 'Σφάλμα',
+      'scanDetails': 'Λεπτομέρειες Σάρωσης',
+      'date': 'Ημερομηνία',
+      'type': 'Τύπος',
+      'result': 'Αποτέλεσμα',
+      'qrBarcodeValue': 'Τιμή QR/Barcode:',
+      'data': 'Δεδομένα:',
     },
     'en': {
       'notificationSettings': 'Notification Settings',
@@ -283,6 +342,34 @@ class AppLocalizations {
       'insufficientStock': 'Insufficient stock',
       'transactionSuccess': 'Transaction recorded!',
       'transactionFailed': 'Transaction failed',
+      // Material Edit Sheet
+      'nameRequired': 'Name is required',
+      'costNegativeError': 'Cost cannot be negative',
+      'minStockNegativeError': 'Min stock cannot be negative',
+      'materialUpdated': 'Material updated successfully',
+      'saveFailed': 'Save failed',
+      'saving': 'Saving...',
+      'costLabel': 'Cost (€)',
+      // Worker Detail Sheet
+      'role': 'Role',
+      'phone': 'Phone',
+      'localStorageNote': 'Records are stored locally and will sync when available.',
+      // Scan History Screen
+      'loadingError': 'Loading error',
+      'deleted': 'Deleted',
+      'deleteHistory': 'Delete History',
+      'deleteHistoryConfirm': 'Are you sure you want to delete all scan history?',
+      'historyDeleted': 'History deleted',
+      'deleteAll': 'Delete all',
+      'noScanHistory': 'No scan history',
+      'scansWillAppearHere': 'Your scans will appear here',
+      'error': 'Error',
+      'scanDetails': 'Scan Details',
+      'date': 'Date',
+      'type': 'Type',
+      'result': 'Result',
+      'qrBarcodeValue': 'QR/Barcode value:',
+      'data': 'Data:',
     },
   };
 }
