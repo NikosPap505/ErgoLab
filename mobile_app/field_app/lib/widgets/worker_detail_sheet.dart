@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/offline_database.dart';
+import '../services/api_service.dart';
 import '../l10n/app_localizations.dart';
 
 /// Widget displaying worker details with check-in/check-out functionality.
-/// Attendance is stored locally and synced when backend supports it.
+/// Attendance is stored locally and synced with backend when available.
 class WorkerDetailSheet extends StatefulWidget {
   final Map<String, dynamic> workerData;
   final VoidCallback onClose;
+  final ApiService? apiService;
 
   const WorkerDetailSheet({
     super.key,
     required this.workerData,
     required this.onClose,
+    this.apiService,
   });
 
   @override
@@ -75,9 +78,17 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
     final errorText = l10n.errorOccurred;
 
     try {
-      await OfflineDatabase.recordWorkerAttendance(
+      // Record to local database
+      final recordId = await OfflineDatabase.recordWorkerAttendance(
         workerId: workerId,
         workerName: workerName,
+        action: action,
+      );
+
+      // Sync to backend immediately (non-blocking)
+      _syncAttendanceToBackend(
+        recordId: recordId,
+        workerId: workerId,
         action: action,
       );
 
@@ -101,6 +112,37 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Background sync to backend - non-blocking
+  Future<void> _syncAttendanceToBackend({
+    required int recordId,
+    required int workerId,
+    required String action,
+  }) async {
+    final apiService = widget.apiService;
+    if (apiService == null) {
+      debugPrint('WorkerDetailSheet: No API service provided, skipping sync');
+      return;
+    }
+
+    try {
+      final success = await apiService.syncWorkerAttendance(
+        workerId: workerId,
+        action: action,
+        timestamp: DateTime.now(),
+      );
+
+      if (success) {
+        await OfflineDatabase.markAttendanceSynced(recordId);
+        debugPrint('WorkerDetailSheet: Attendance synced successfully (record $recordId)');
+      } else {
+        debugPrint('WorkerDetailSheet: Attendance sync failed (record $recordId), will retry later');
+      }
+    } catch (e) {
+      // Silent failure - record stays unsynced for later retry
+      debugPrint('WorkerDetailSheet: Attendance sync error (record $recordId): $e');
     }
   }
 
@@ -389,6 +431,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
     final action = record['action'] as String?;
     final timestamp = DateTime.tryParse(record['timestamp'] as String? ?? '');
     final isCheckIn = action == 'check_in';
+    final synced = (record['synced'] as int?) == 1;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -412,6 +455,9 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
               color: isCheckIn ? Colors.green : Colors.orange,
             ),
           ),
+          const SizedBox(width: 8),
+          if (synced)
+            Icon(Icons.cloud_done, size: 14, color: Colors.blue[300]),
           const Spacer(),
           if (timestamp != null)
             Text(
