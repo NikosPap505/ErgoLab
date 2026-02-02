@@ -32,12 +32,27 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   Future<void> _initCamera() async {
     final granted = await _ensureCameraPermission();
-    if (!mounted) return;
-    setState(() {
-      _cameraReady = granted;
-    });
-    if (granted) {
+    if (!mounted || _isDisposed) return;
+    
+    if (!granted) {
+      setState(() {
+        _cameraReady = false;
+      });
+      return;
+    }
+    
+    try {
       await cameraController.start();
+      if (!mounted || _isDisposed) return;
+      setState(() {
+        _cameraReady = true;
+      });
+    } catch (e) {
+      debugPrint('QRScannerScreen: Failed to start camera: $e');
+      if (!mounted || _isDisposed) return;
+      setState(() {
+        _cameraReady = false;
+      });
     }
   }
 
@@ -167,6 +182,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         materialData: materialData,
         onClose: () {
           Navigator.pop(context);
+          if (!mounted || _isDisposed) return;
           cameraController.start();
         },
         onTransaction: () {
@@ -201,6 +217,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              if (!mounted || _isDisposed) return;
               cameraController.start();
             },
             child: const Text('Ακύρωση'),
@@ -244,12 +261,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       '/add-stock',
       arguments: {'id': materialId},
     ).then((_) {
+      if (!mounted || _isDisposed) return;
       cameraController.start();
     });
   }
 
   Future<void> _handleWorkerCheckIn(int workerId) async {
     _showError('Worker check-in coming soon');
+    if (!mounted || _isDisposed) return;
     cameraController.start();
   }
 

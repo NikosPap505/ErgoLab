@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/app_state.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
@@ -42,8 +43,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Αποτυχία φόρτωσης ρυθμίσεων.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).errorLoadingSettings),
           backgroundColor: Colors.red,
         ),
       );
@@ -58,15 +59,17 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       );
     }
 
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ρυθμίσεις Ειδοποιήσεων'),
+        title: Text(l10n.notificationSettings),
       ),
       body: ListView(
         children: [
           SwitchListTile(
-            title: const Text('Push Notifications'),
-            subtitle: const Text('Λήψη ειδοποιήσεων στη συσκευή'),
+            title: Text(l10n.pushNotifications),
+            subtitle: Text(l10n.pushNotificationsSubtitle),
             value: pushEnabled,
             onChanged: (value) {
               setState(() {
@@ -82,15 +85,15 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             },
           ),
           const Divider(),
-          const ListTile(
+          ListTile(
             title: Text(
-              'Τύποι Ειδοποιήσεων',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              l10n.notificationTypes,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
           SwitchListTile(
-            title: const Text('Ημερήσιες Αναφορές'),
-            subtitle: const Text('Ειδοποιήσεις για νέες αναφορές'),
+            title: Text(l10n.dailyReports),
+            subtitle: Text(l10n.dailyReportsSubtitle),
             value: dailyReports,
             onChanged: pushEnabled
                 ? (value) {
@@ -100,8 +103,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 : null,
           ),
           SwitchListTile(
-            title: const Text('Issues'),
-            subtitle: const Text('Ενημερώσεις για προβλήματα'),
+            title: Text(l10n.issues),
+            subtitle: Text(l10n.issuesSubtitle),
             value: issueUpdates,
             onChanged: pushEnabled
                 ? (value) {
@@ -111,8 +114,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 : null,
           ),
           SwitchListTile(
-            title: const Text('Χαμηλά Αποθέματα'),
-            subtitle: const Text('Ειδοποιήσεις για χαμηλά αποθέματα'),
+            title: Text(l10n.lowStock),
+            subtitle: Text(l10n.lowStockSubtitle),
             value: lowStockAlerts,
             onChanged: pushEnabled
                 ? (value) {
@@ -122,8 +125,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 : null,
           ),
           SwitchListTile(
-            title: const Text('Ενημερώσεις Έργων/Οικονομικά'),
-            subtitle: const Text('Ειδοποιήσεις για budget & έργα'),
+            title: Text(l10n.projectUpdates),
+            subtitle: Text(l10n.projectUpdatesSubtitle),
             value: projectUpdates,
             onChanged: pushEnabled
                 ? (value) {
@@ -161,8 +164,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         projectUpdates = prevProjectUpdates;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Αποτυχία αποθήκευσης ρυθμίσεων.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).errorSavingSettings),
           backgroundColor: Colors.red,
         ),
       );

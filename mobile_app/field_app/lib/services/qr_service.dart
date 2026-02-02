@@ -23,10 +23,6 @@ class QRService {
         'additional_data': data,
       });
 
-      if (response is! Map<String, dynamic>) {
-        throw const FormatException('Invalid response');
-      }
-
       return response;
     } catch (e) {
       throw Exception('Invalid QR code: $e');
@@ -43,7 +39,7 @@ class QRService {
       throw const FormatException('QR payload must be an object');
     }
 
-    final data = Map<String, dynamic>.from(decoded as Map);
+    final data = Map<String, dynamic>.from(decoded);
     final type = data['type'];
     if (type is! String || !_allowedTypes.contains(type)) {
       throw const FormatException('Unsupported QR type');

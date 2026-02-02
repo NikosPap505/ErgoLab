@@ -34,6 +34,7 @@ class ConnectivityService with ChangeNotifier {
     } else if (result is ConnectivityResult) {
       _isOnline = result != ConnectivityResult.none;
     } else {
+      debugPrint('Unexpected connectivity result type: ${result.runtimeType}');
       _isOnline = false;
     }
     

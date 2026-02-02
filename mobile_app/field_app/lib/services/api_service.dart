@@ -1,13 +1,51 @@
+import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
-  static const String baseUrl = String.fromEnvironment(
-    'API_URL',
-    defaultValue: 'http://192.168.2.8:8000',
-  );
-  // For physical device: set --dart-define=API_URL=http://YOUR_LOCAL_IP:8000
+  // API_URL must be provided via --dart-define=API_URL=https://your-api.com
+  // In debug mode, falls back to platform-appropriate localhost
+  static const String _envUrl = String.fromEnvironment('API_URL');
+  
+  static String get baseUrl {
+    if (_envUrl.isNotEmpty) {
+      return _envUrl;
+    }
+    
+    // Debug-only fallbacks for local development
+    if (kDebugMode) {
+      // Android emulator uses 10.0.2.2 to reach host machine
+      // iOS simulator and physical devices use localhost/127.0.0.1
+      if (!kIsWeb && Platform.isAndroid) {
+        return 'http://10.0.2.2:8000';
+      }
+      return 'http://127.0.0.1:8000';
+    }
+    
+    // Release mode requires explicit API_URL
+    return '';
+  }
+
+  static void validateBaseUrl() {
+    if (kReleaseMode) {
+      if (baseUrl.isEmpty) {
+        throw StateError(
+          'API_URL must be provided via --dart-define for release builds. '
+          'Example: --dart-define=API_URL=https://api.example.com',
+        );
+      }
+      final uri = Uri.tryParse(baseUrl);
+      if (uri == null || uri.scheme != 'https') {
+        throw StateError(
+          'API_URL must use HTTPS in release builds. '
+          'Current value: $baseUrl',
+        );
+      }
+    } else if (kDebugMode && baseUrl.isNotEmpty) {
+      debugPrint('ApiService: Using baseUrl=$baseUrl');
+    }
+  }
   
   final Dio _dio = Dio();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -17,6 +55,9 @@ class ApiService {
   String? get token => _token;
 
   ApiService() {
+    // Validate baseUrl before using it - throws in release if invalid
+    validateBaseUrl();
+    
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
@@ -58,7 +99,16 @@ class ApiService {
         ),
       );
 
-      _token = response.data['access_token'];
+      final accessToken = response.data['access_token'];
+      if (accessToken == null) {
+        debugPrint('Login error: access_token missing from response');
+        return false;
+      }
+      if (accessToken is! String) {
+        debugPrint('Login error: access_token is not a String (got ${accessToken.runtimeType})');
+        return false;
+      }
+      _token = accessToken;
       
       await _secureStorage.write(key: 'auth_token', value: _token!);
       

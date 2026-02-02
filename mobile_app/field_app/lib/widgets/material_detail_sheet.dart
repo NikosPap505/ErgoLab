@@ -97,7 +97,6 @@ class MaterialDetailSheet extends StatelessWidget {
                 child: ListView(
                   controller: scrollController,
                   children: [
-                    _buildInfoRow('Κατηγορία', materialData['category'] ?? '-'),
                     _buildInfoRow('Κατηγορία', category),
                     _buildInfoRow('Μονάδα', unit),
                     _buildInfoRow(
@@ -119,7 +118,8 @@ class MaterialDetailSheet extends StatelessWidget {
                       ...List.generate(
                         stockList.length,
                         (index) {
-                          final stock = stockList[index] as Map<String, dynamic>? ?? {};
+                          final item = stockList[index];
+                          final stock = item is Map<String, dynamic> ? item : <String, dynamic>{};
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(

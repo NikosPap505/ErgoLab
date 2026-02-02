@@ -12,8 +12,14 @@ class HomeScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final fullName = appState.currentUser?['full_name']?.toString() ?? '';
     final initials = fullName.isNotEmpty ? fullName.substring(0, 1) : 'U';
-    final projectIds = appState.projects.map<int>((p) => p['id'] as int).toList();
-    final warehouseIds = appState.warehouses.map<int>((w) => w['id'] as int).toList();
+    final projectIds = appState.projects
+      .map((p) => p['id'])
+      .whereType<int>()
+      .toList();
+    final warehouseIds = appState.warehouses
+      .map((w) => w['id'])
+      .whereType<int>()
+      .toList();
     final selectedProjectId = projectIds.contains(appState.selectedProjectId)
       ? appState.selectedProjectId
       : null;
@@ -197,7 +203,7 @@ class HomeScreen extends StatelessWidget {
                   subtitle: 'Προβολή',
                   color: Colors.green,
                   onTap: () {
-                    if (appState.selectedWarehouseId == null) {
+                    if (selectedWarehouseId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Επιλέξτε πρώτα αποθήκη'),
@@ -215,7 +221,7 @@ class HomeScreen extends StatelessWidget {
                   subtitle: 'Υλικών',
                   color: Colors.orange,
                   onTap: () {
-                    if (appState.selectedWarehouseId == null) {
+                    if (selectedWarehouseId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Επιλέξτε πρώτα αποθήκη'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/connectivity_service.dart';
+import '../services/offline_database.dart';
 
 
 class AddStockScreen extends StatefulWidget {
@@ -79,22 +80,35 @@ class _AddStockScreenState extends State<AddStockScreen> {
         (i) => (i['material_id'] ?? i['material']?['id']) == _selectedMaterialId,
         orElse: () => {},
       );
-      if (item.isNotEmpty) {
-        final available = item['quantity'] ?? 0;
-        if (quantity > available) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Μη επαρκές απόθεμα. Διαθέσιμα: $available'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+      if (item.isEmpty) {
+        // Stock could not be verified - warn user and prevent transaction
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Δεν ήταν δυνατή η επαλήθευση του αποθέματος για αυτό το υλικό'),
+              backgroundColor: Colors.orange,
+            ),
+          );
           setState(() {
             _isSubmitting = false;
           });
-          return;
         }
+        return;
+      }
+      final available = item['quantity'] ?? 0;
+      if (quantity > available) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Μη επαρκές απόθεμα. Διαθέσιμα: $available'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+        return;
       }
     }
 

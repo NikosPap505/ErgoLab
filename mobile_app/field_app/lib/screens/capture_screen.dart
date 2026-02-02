@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -129,7 +130,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       success = true;
     }
 
-    if (success) {
+    if (success && !savedOffline) {
       await _cleanupLocalFiles();
     }
 
@@ -180,7 +181,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     final year = now.year.toString();
     final hour = now.hour.toString().padLeft(2, '0');
     final minute = now.minute.toString().padLeft(2, '0');
-    return 'Φωτο_${day}-${month}-${year}_${hour}${minute}';
+    return 'Φωτο_$day-$month-${year}_$hour$minute';
   }
 
   Future<bool> _ensureCameraPermission() async {

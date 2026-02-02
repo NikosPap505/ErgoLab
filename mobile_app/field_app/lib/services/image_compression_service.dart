@@ -13,6 +13,47 @@ class ImageCompressionService {
   static const int quality = 85;
   static const int thumbnailSize = 200;
   static const Duration _tempRetention = Duration(days: 7);
+  
+  // Cleanup tracking (class-level statics)
+  static DateTime? _lastCleanup;
+  static const Duration _cleanupInterval = Duration(hours: 1);
+  static Future<void>? _cleanupTask;
+
+  /// Periodic cleanup of temp files (throttled to once per hour)
+  /// Synchronized to prevent concurrent cleanup from compressMultiple
+  static Future<void> _maybeCleanupTempFiles(Directory tempDir) async {
+    final now = DateTime.now();
+    
+    // Check timestamp first (fast path)
+    if (_lastCleanup != null && 
+        now.difference(_lastCleanup!) < _cleanupInterval) {
+      return;
+    }
+    
+    // If cleanup is already in progress, await it instead of starting another
+    if (_cleanupTask != null) {
+      await _cleanupTask;
+      return;
+    }
+    
+    // Start cleanup with synchronization
+    _cleanupTask = _runCleanup(tempDir, now);
+    try {
+      await _cleanupTask;
+    } finally {
+      _cleanupTask = null;
+    }
+  }
+
+  /// Internal cleanup runner - only one instance runs at a time
+  static Future<void> _runCleanup(Directory tempDir, DateTime timestamp) async {
+    try {
+      _lastCleanup = timestamp;
+      await _cleanupTempFiles(tempDir);
+    } catch (e) {
+      debugPrint('Cleanup task error: $e');
+    }
+  }
 
   /// Compress an image file for upload
   /// Returns the path to the compressed file
@@ -49,7 +90,7 @@ class ImageCompressionService {
 
       // Save to temp directory
       final tempDir = await getTemporaryDirectory();
-      await _cleanupTempFiles(tempDir);
+      await _maybeCleanupTempFiles(tempDir);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final compressedPath = path.join(tempDir.path, 'compressed_$timestamp.jpg');
       

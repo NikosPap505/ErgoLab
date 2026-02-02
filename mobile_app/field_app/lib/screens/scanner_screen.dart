@@ -67,10 +67,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
         }
         
         await _controller.stop();
+        if (!mounted) return;
         Navigator.of(context).pushNamed(
           '/add-stock',
           arguments: material,
-        );
+        ).then((_) {
+          if (mounted) {
+            _controller.start();
+            setState(() {
+              _isProcessing = false;
+            });
+          }
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

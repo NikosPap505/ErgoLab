@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class NotificationService {
     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
       _notificationsEnabled = false;
       debugPrint('Notification permission denied');
-      _showPermissionDeniedMessage();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showPermissionDeniedMessage());
       return;
     }
 
@@ -119,15 +120,40 @@ class NotificationService {
           : Platform.isAndroid
               ? 'android'
               : Platform.operatingSystem;
+      final deviceName = await _getDeviceName();
       await _apiService.registerDeviceToken(
         token: token,
         deviceType: deviceType,
-        deviceName: Platform.operatingSystem,
+        deviceName: deviceName,
       );
       debugPrint('FCM token registered');
     } catch (e) {
       debugPrint('Error registering FCM token: $e');
     }
+  }
+
+  Future<String> _getDeviceName() async {
+    final deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        final manufacturer = info.manufacturer;
+        final model = info.model;
+        return '$manufacturer $model'.trim();
+      }
+      if (Platform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        // Use user-friendly name: user-set name or localized model
+        final name = info.name;
+        if (name.isNotEmpty) {
+          return name; // e.g., "John's iPhone"
+        }
+        return info.localizedModel; // e.g., "iPhone"
+      }
+    } catch (e) {
+      debugPrint('Device info error: $e');
+    }
+    return Platform.localHostname;
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
@@ -188,12 +214,19 @@ class NotificationService {
     _navigateToScreen(Map<String, dynamic>.from(data));
   }
 
-  void _navigateToScreen(Map<String, dynamic> data) {
+  void _navigateToScreen(Map<String, dynamic> data, {int attempts = 0}) {
+    const maxRetries = 3;
     final route = data['screen']?.toString();
     final navigator = navigatorKey.currentState;
 
     if (navigator == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _navigateToScreen(data));
+      if (attempts >= maxRetries) {
+        debugPrint('Navigate: navigator not ready after $maxRetries attempts');
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _navigateToScreen(data, attempts: attempts + 1),
+      );
       return;
     }
 
