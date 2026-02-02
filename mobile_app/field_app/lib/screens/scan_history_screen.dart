@@ -57,8 +57,9 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Σφάλμα φόρτωσης: $e')),
+          SnackBar(content: Text('${l10n.loadingError}: $e')),
         );
       }
     }
@@ -86,29 +87,29 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
       setState(() {
         _scans.removeAt(index);
       });
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Διαγράφηκε')),
+        SnackBar(content: Text(l10n.deleted)),
       );
     }
   }
 
   Future<void> _clearAllHistory() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Διαγραφή Ιστορικού'),
-        content: const Text(
-          'Είστε σίγουροι ότι θέλετε να διαγράψετε όλο το ιστορικό σαρώσεων;',
-        ),
+        title: Text(l10n.deleteHistory),
+        content: Text(l10n.deleteHistoryConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Άκυρο'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Διαγραφή'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -123,7 +124,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
           _hasMore = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Το ιστορικό διαγράφηκε')),
+          SnackBar(content: Text(l10n.historyDeleted)),
         );
       }
     }
@@ -141,7 +142,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             IconButton(
               icon: const Icon(Icons.delete_sweep),
               onPressed: _clearAllHistory,
-              tooltip: 'Διαγραφή όλων',
+              tooltip: l10n.deleteAll,
             ),
         ],
       ),
@@ -155,6 +156,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
     }
 
     if (_scans.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -162,12 +164,12 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             Icon(Icons.history, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'Δεν υπάρχει ιστορικό σαρώσεων',
+              l10n.noScanHistory,
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
-              'Οι σαρώσεις σας θα εμφανίζονται εδώ',
+              l10n.scansWillAppearHere,
               style: TextStyle(color: Colors.grey[500]),
             ),
           ],
@@ -194,10 +196,11 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   }
 
   Widget _buildScanTile(Map<String, dynamic> scan, int index) {
+    final l10n = AppLocalizations.of(context);
     final scannedAt = DateTime.tryParse(scan['scanned_at'] ?? '');
     final formattedDate = scannedAt != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(scannedAt)
-        : 'Άγνωστη ημερομηνία';
+        : l10n.unknownDate;
 
     final resultType = scan['result_type'] as String?;
     final resultName = scan['result_name'] as String?;
@@ -266,23 +269,25 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   }
 
   String _getResultTypeLabel(String type) {
+    final l10n = AppLocalizations.of(context);
     switch (type) {
       case 'material':
-        return 'Υλικό';
+        return l10n.material;
       case 'worker':
-        return 'Εργαζόμενος';
+        return l10n.worker;
       case 'error':
-        return 'Σφάλμα';
+        return l10n.error;
       default:
         return type;
     }
   }
 
   void _showScanDetails(Map<String, dynamic> scan) {
+    final l10n = AppLocalizations.of(context);
     final scannedAt = DateTime.tryParse(scan['scanned_at'] ?? '');
     final formattedDate = scannedAt != null
         ? DateFormat('dd/MM/yyyy HH:mm:ss').format(scannedAt)
-        : 'Άγνωστη';
+        : l10n.unknownDate;
 
     showModalBottomSheet(
       context: context,
@@ -312,23 +317,23 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Λεπτομέρειες Σάρωσης',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                l10n.scanDetails,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              _buildDetailRow('Ημερομηνία', formattedDate),
-              _buildDetailRow('Τύπος', scan['scan_type'] ?? 'N/A'),
+              _buildDetailRow(l10n.date, formattedDate),
+              _buildDetailRow(l10n.type, scan['scan_type'] ?? 'N/A'),
               _buildDetailRow(
-                'Αποτέλεσμα',
+                l10n.result,
                 _getResultTypeLabel(scan['result_type'] ?? 'unknown'),
               ),
               if (scan['result_name'] != null)
-                _buildDetailRow('Όνομα', scan['result_name']),
+                _buildDetailRow(l10n.name, scan['result_name']),
               const SizedBox(height: 16),
-              const Text(
-                'Τιμή QR/Barcode:',
-                style: TextStyle(fontWeight: FontWeight.w500),
+              Text(
+                l10n.qrBarcodeValue,
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
               Container(
@@ -345,9 +350,9 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
               ),
               if (scan['result_data'] != null) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Δεδομένα:',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  l10n.data,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -372,9 +377,9 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                     _deleteScan(scan['id'] as int, _scans.indexOf(scan));
                   },
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  label: const Text(
-                    'Διαγραφή',
-                    style: TextStyle(color: Colors.red),
+                  label: Text(
+                    l10n.delete,
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ),
               ),
