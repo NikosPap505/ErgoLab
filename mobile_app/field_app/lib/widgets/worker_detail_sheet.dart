@@ -211,7 +211,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _lastAction == 'check_in' ? 'Checked In' : 'Checked Out',
+                            _lastAction == 'check_in' ? l10n.checkedIn : l10n.checkedOut,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _lastAction == 'check_in' ? Colors.green : Colors.grey[700],
@@ -385,6 +385,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
   }
 
   Widget _buildHistoryItem(Map<String, dynamic> record) {
+    final l10n = AppLocalizations.of(context);
     final action = record['action'] as String?;
     final timestamp = DateTime.tryParse(record['timestamp'] as String? ?? '');
     final isCheckIn = action == 'check_in';
@@ -405,7 +406,7 @@ class _WorkerDetailSheetState extends State<WorkerDetailSheet> {
           ),
           const SizedBox(width: 8),
           Text(
-            isCheckIn ? 'Check In' : 'Check Out',
+            isCheckIn ? l10n.checkIn : l10n.checkOut,
             style: TextStyle(
               fontWeight: FontWeight.w500,
               color: isCheckIn ? Colors.green : Colors.orange,
