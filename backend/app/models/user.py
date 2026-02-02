@@ -41,6 +41,11 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    device_tokens = relationship(
+        "DeviceToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     created_reports = relationship("DailyReport", back_populates="creator")
     created_issues = relationship(

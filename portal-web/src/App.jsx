@@ -13,11 +13,14 @@ import ErrorBoundary from './components/ErrorBoundary';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Materials = lazy(() => import('./pages/Materials'));
 const Projects = lazy(() => import('./pages/Projects'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 const Warehouses = lazy(() => import('./pages/Warehouses'));
 const Documents = lazy(() => import('./pages/Documents'));
 const DocumentAnnotate = lazy(() => import('./pages/DocumentAnnotate'));
 const Transfers = lazy(() => import('./pages/Transfers'));
 const Reports = lazy(() => import('./pages/Reports'));
+const IssuesKanban = lazy(() => import('./pages/IssuesKanban'));
+const TimelineView = lazy(() => import('./pages/TimelineView'));
 const Users = lazy(() => import('./pages/Users'));
 
 // Skeleton loader for content areas
@@ -54,11 +57,14 @@ function App() {
                               <Route path="/" element={<Dashboard />} />
                               <Route path="/materials" element={<Materials />} />
                               <Route path="/projects" element={<Projects />} />
+                              <Route path="/projects/:projectId" element={<ProjectDetail />} />
+                              <Route path="/projects/:projectId/timeline" element={<TimelineView />} />
                               <Route path="/warehouses" element={<Warehouses />} />
                               <Route path="/transfers" element={<Transfers />} />
                               <Route path="/documents" element={<Documents />} />
                               <Route path="/documents/:documentId/annotate" element={<DocumentAnnotate />} />
                               <Route path="/reports" element={<Reports />} />
+                              <Route path="/reports/issues/kanban" element={<IssuesKanban />} />
                               <Route
                                 path="/users"
                                 element={

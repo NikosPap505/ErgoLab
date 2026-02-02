@@ -92,7 +92,7 @@ class AppState with ChangeNotifier {
       _warehouses = await _syncService.getWarehouses();
       _projects = await _syncService.getProjects();
     } catch (e) {
-      print('Error loading data: $e');
+      debugPrint('Error loading data: $e');
       // Fall back to cached data
       _materials = await OfflineDatabase.getCachedMaterials();
       _warehouses = await OfflineDatabase.getCachedWarehouses();

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
+import wsService from '../services/websocket';
+import { useToast } from '../components/Toast';
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const { success, warning, error: showError } = useToast();
   const [stats, setStats] = useState({
     projects: 0,
     materials: 0,
@@ -11,10 +14,69 @@ const Dashboard = () => {
     transfers: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState([]);
 
   useEffect(() => {
     loadStats();
   }, []);
+
+  useEffect(() => {
+    const handleDailyReport = (message) => {
+      success(`📊 Νέα ημερήσια αναφορά από ${message.created_by}`);
+
+      setRecentActivities((prev) => [
+        {
+          id: Date.now(),
+          type: 'daily_report',
+          message: `${message.created_by} δημιούργησε αναφορά για ${message.report_date}`,
+          timestamp: message.timestamp,
+        },
+        ...prev.slice(0, 9),
+      ]);
+    };
+
+    const handleIssueCreated = (message) => {
+      const severityIcon = {
+        critical: '🔴',
+        high: '🟠',
+        medium: '🟡',
+        low: '🟢',
+      };
+
+      warning(`${severityIcon[message.severity] || '🟡'} ${message.title}`);
+
+      setRecentActivities((prev) => [
+        {
+          id: Date.now(),
+          type: 'issue',
+          message: `${message.reported_by}: ${message.title}`,
+          timestamp: message.timestamp,
+          severity: message.severity,
+        },
+        ...prev.slice(0, 9),
+      ]);
+    };
+
+    const handleCriticalIssue = (message) => {
+      showError(`🚨 ΚΡΙΤΙΚΟ: ${message.title}`, 0);
+    };
+
+    const handleIssueStatusChanged = (message) => {
+      success(`✓ Issue #${message.issue_id}: ${message.old_status} → ${message.new_status}`);
+    };
+
+    wsService.on('daily_report_created', handleDailyReport);
+    wsService.on('issue_created', handleIssueCreated);
+    wsService.on('critical_issue', handleCriticalIssue);
+    wsService.on('issue_status_changed', handleIssueStatusChanged);
+
+    return () => {
+      wsService.off('daily_report_created', handleDailyReport);
+      wsService.off('issue_created', handleIssueCreated);
+      wsService.off('critical_issue', handleCriticalIssue);
+      wsService.off('issue_status_changed', handleIssueStatusChanged);
+    };
+  }, [success, warning, showError]);
 
   const loadStats = async () => {
     try {
@@ -78,7 +140,27 @@ const Dashboard = () => {
 
       <div className="mt-8 bg-white shadow rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">{t('dashboard.recentActivity')}</h2>
-        <p className="text-gray-500">{t('dashboard.noRecentActivity')}</p>
+        {recentActivities.length === 0 ? (
+          <p className="text-gray-500">{t('dashboard.noRecentActivity')}</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentActivities.map((activity) => (
+              <li
+                key={activity.id}
+                className={`flex items-center p-3 rounded-lg ${
+                  activity.severity === 'critical'
+                    ? 'bg-red-50 dark:bg-red-900'
+                    : 'bg-gray-50 dark:bg-gray-800'
+                }`}
+              >
+                <span className="flex-1">{activity.message}</span>
+                <span className="text-sm text-gray-500">
+                  {new Date(activity.timestamp).toLocaleTimeString('el-GR')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

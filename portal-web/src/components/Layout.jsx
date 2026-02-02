@@ -20,6 +20,7 @@ const Layout = ({ children }) => {
     { name: t('nav.transfers'), href: '/transfers', icon: '🚚' },
     { name: t('nav.documents'), href: '/documents', icon: '📄' },
     { name: t('nav.reports'), href: '/reports', icon: '📈' },
+    { name: '📋 Kanban', href: '/reports/issues/kanban', icon: '🗂️', permission: 'issue:read' },
     { name: t('nav.users'), href: '/users', icon: '👥', permission: 'user:read' },
   ];
 

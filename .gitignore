@@ -17,6 +17,7 @@
 *.crt
 *.cer
 *.der
+backend/firebase-credentials.json
 secrets/
 .secrets/
 
@@ -206,3 +207,5 @@ SCRATCH.md
 scripts/local/*.sh
 *.local.sh
 *-local.sh
+mobile_app/field_app/lib/providers/app_state.dart
+backend/ergolab-98b61-firebase-adminsdk-fbsvc-52d5bfe66b.json

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -25,7 +26,7 @@ class ApiService {
           return handler.next(options);
         },
         onError: (error, handler) {
-          print('API Error: ${error.message}');
+          debugPrint('API Error: ${error.message}');
           return handler.next(error);
         },
       ),
@@ -57,7 +58,7 @@ class ApiService {
       
       return true;
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
       return false;
     }
   }
@@ -67,7 +68,7 @@ class ApiService {
       final response = await _dio.get('/api/users/me');
       return response.data;
     } catch (e) {
-      print('Get user error: $e');
+      debugPrint('Get user error: $e');
       return null;
     }
   }
@@ -77,7 +78,7 @@ class ApiService {
       final response = await _dio.get('/api/projects/');
       return response.data;
     } catch (e) {
-      print('Get projects error: $e');
+      debugPrint('Get projects error: $e');
       return [];
     }
   }
@@ -87,7 +88,7 @@ class ApiService {
       final response = await _dio.get('/api/warehouses/');
       return response.data;
     } catch (e) {
-      print('Get warehouses error: $e');
+      debugPrint('Get warehouses error: $e');
       return [];
     }
   }
@@ -97,7 +98,7 @@ class ApiService {
       final response = await _dio.get('/api/materials/');
       return response.data;
     } catch (e) {
-      print('Get materials error: $e');
+      debugPrint('Get materials error: $e');
       return [];
     }
   }
@@ -110,7 +111,7 @@ class ApiService {
         orElse: () => null,
       );
     } catch (e) {
-      print('Get material by SKU error: $e');
+      debugPrint('Get material by SKU error: $e');
       return null;
     }
   }
@@ -135,7 +136,7 @@ class ApiService {
       );
       return true;
     } catch (e) {
-      print('Add transaction error: $e');
+      debugPrint('Add transaction error: $e');
       return false;
     }
   }
@@ -145,7 +146,7 @@ class ApiService {
       final response = await _dio.get('/api/inventory/warehouse/$warehouseId');
       return response.data;
     } catch (e) {
-      print('Get inventory error: $e');
+      debugPrint('Get inventory error: $e');
       return [];
     }
   }
@@ -173,7 +174,7 @@ class ApiService {
 
       return response.data['id'].toString();
     } catch (e) {
-      print('Upload document error: $e');
+      debugPrint('Upload document error: $e');
       return null;
     }
   }
@@ -182,5 +183,74 @@ class ApiService {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+  }
+
+  Future<Map<String, dynamic>> handleQrScan(Map<String, dynamic> payload) async {
+    try {
+      final response = await _dio.post('/api/inventory/scan', data: payload);
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      debugPrint('QR scan error: $e');
+      rethrow;
+    }
+  }
+
+  Future<String> getMaterialQr(int materialId) async {
+    try {
+      final response = await _dio.get('/api/materials/$materialId/qr');
+      final data = Map<String, dynamic>.from(response.data as Map);
+      return data['qr_code'] as String;
+    } catch (e) {
+      debugPrint('Get material QR error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> registerDeviceToken({
+    required String token,
+    required String deviceType,
+    String? deviceName,
+  }) async {
+    try {
+      await _dio.post('/api/notifications/register-device', data: {
+        'token': token,
+        'device_type': deviceType,
+        'device_name': deviceName,
+      });
+    } catch (e) {
+      debugPrint('Register device token error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> unregisterDeviceToken(String token) async {
+    try {
+      await _dio.delete('/api/notifications/unregister-device/$token');
+    } catch (e) {
+      debugPrint('Unregister device token error: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getNotificationPreferences() async {
+    try {
+      final response = await _dio.get('/api/notifications/preferences');
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      debugPrint('Get notification preferences error: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> updateNotificationPreferences(
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final response = await _dio.put('/api/notifications/preferences', data: payload);
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      debugPrint('Update notification preferences error: $e');
+      rethrow;
+    }
   }
 }

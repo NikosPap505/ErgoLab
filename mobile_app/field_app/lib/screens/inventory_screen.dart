@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/connectivity_service.dart';
 import '../services/offline_database.dart';
-import '../widgets/offline_widgets.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -210,6 +209,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
             ),
 
+          if (_isOfflineData)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.cloud_off, color: Colors.orange, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Offline mode - προβολή cached δεδομένων',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Search Bar
           Padding(
             padding: const EdgeInsets.all(16),
@@ -298,7 +321,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
-                                  color: _getStockLevelColor(quantity, minStock).withOpacity(0.3),
+                                  color: _getStockLevelColor(quantity, minStock).withAlpha(77),
                                   width: 1,
                                 ),
                               ),
@@ -319,7 +342,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         width: 56,
                                         height: 56,
                                         decoration: BoxDecoration(
-                                          color: _getStockLevelColor(quantity, minStock).withOpacity(0.1),
+                                          color: _getStockLevelColor(quantity, minStock).withAlpha(26),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Icon(
@@ -357,7 +380,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                                 vertical: 4,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: _getStockLevelColor(quantity, minStock).withOpacity(0.1),
+                                                color: _getStockLevelColor(quantity, minStock).withAlpha(26),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
                                               child: Text(
@@ -431,9 +454,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withAlpha(77)),
       ),
       child: Text(
         '$count $label',

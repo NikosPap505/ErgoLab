@@ -48,7 +48,7 @@ class SyncService with ChangeNotifier {
   void _onConnectivityChanged() {
     if (connectivityService.isOnline && !_isSyncing) {
       // Auto-sync when connection restored
-      print('📶 Connection restored - starting auto-sync');
+      debugPrint('📶 Connection restored - starting auto-sync');
       syncAll();
     }
   }
@@ -61,12 +61,12 @@ class SyncService with ChangeNotifier {
   /// Full sync: upload pending, download fresh data
   Future<bool> syncAll() async {
     if (_isSyncing) {
-      print('⚠️ Sync already in progress');
+      debugPrint('⚠️ Sync already in progress');
       return false;
     }
     
     if (!connectivityService.isOnline) {
-      print('⚠️ Cannot sync - offline');
+      debugPrint('⚠️ Cannot sync - offline');
       _lastSyncError = 'No internet connection';
       notifyListeners();
       return false;
@@ -120,14 +120,14 @@ class SyncService with ChangeNotifier {
       _lastSyncError = null;
       await _updatePendingCount();
       
-      print('✅ Full sync completed at $_lastSyncTime');
+      debugPrint('✅ Full sync completed at $_lastSyncTime');
       
       _isSyncing = false;
       notifyListeners();
       return true;
       
     } catch (e) {
-      print('❌ Sync error: $e');
+      debugPrint('❌ Sync error: $e');
       _lastSyncError = e.toString();
       _syncStatus = 'Sync failed';
       _isSyncing = false;
@@ -141,11 +141,11 @@ class SyncService with ChangeNotifier {
     final pending = await OfflineDatabase.getPendingTransactions();
     
     if (pending.isEmpty) {
-      print('  ✓ No pending transactions');
+      debugPrint('  ✓ No pending transactions');
       return;
     }
     
-    print('  📤 Syncing ${pending.length} pending transactions...');
+    debugPrint('  📤 Syncing ${pending.length} pending transactions...');
     
     for (final transaction in pending) {
       try {
@@ -159,12 +159,12 @@ class SyncService with ChangeNotifier {
         
         if (success) {
           await OfflineDatabase.markTransactionSynced(transaction['id'] as int);
-          print('    ✅ Transaction ${transaction['id']} synced');
+          debugPrint('    ✅ Transaction ${transaction['id']} synced');
         } else {
-          print('    ⚠️ Transaction ${transaction['id']} failed - will retry');
+          debugPrint('    ⚠️ Transaction ${transaction['id']} failed - will retry');
         }
       } catch (e) {
-        print('    ❌ Transaction ${transaction['id']} error: $e');
+        debugPrint('    ❌ Transaction ${transaction['id']} error: $e');
         // Don't throw - continue with other transactions
       }
     }
@@ -178,11 +178,11 @@ class SyncService with ChangeNotifier {
     final pending = await OfflineDatabase.getPendingUploads();
     
     if (pending.isEmpty) {
-      print('  ✓ No pending uploads');
+      debugPrint('  ✓ No pending uploads');
       return;
     }
     
-    print('  📤 Syncing ${pending.length} pending uploads...');
+    debugPrint('  📤 Syncing ${pending.length} pending uploads...');
     
     for (final upload in pending) {
       try {
@@ -196,12 +196,12 @@ class SyncService with ChangeNotifier {
         
         if (result != null) {
           await OfflineDatabase.markUploadSynced(upload['id'] as int);
-          print('    ✅ Upload ${upload['id']} synced');
+          debugPrint('    ✅ Upload ${upload['id']} synced');
         } else {
-          print('    ⚠️ Upload ${upload['id']} failed - will retry');
+          debugPrint('    ⚠️ Upload ${upload['id']} failed - will retry');
         }
       } catch (e) {
-        print('    ❌ Upload ${upload['id']} error: $e');
+        debugPrint('    ❌ Upload ${upload['id']} error: $e');
       }
     }
   }
@@ -212,10 +212,10 @@ class SyncService with ChangeNotifier {
       final materials = await apiService.getMaterials();
       if (materials.isNotEmpty) {
         await OfflineDatabase.cacheMaterials(materials);
-        print('  ✅ Downloaded ${materials.length} materials');
+        debugPrint('  ✅ Downloaded ${materials.length} materials');
       }
     } catch (e) {
-      print('  ❌ Download materials error: $e');
+      debugPrint('  ❌ Download materials error: $e');
       rethrow;
     }
   }
@@ -226,10 +226,10 @@ class SyncService with ChangeNotifier {
       final warehouses = await apiService.getWarehouses();
       if (warehouses.isNotEmpty) {
         await OfflineDatabase.cacheWarehouses(warehouses);
-        print('  ✅ Downloaded ${warehouses.length} warehouses');
+        debugPrint('  ✅ Downloaded ${warehouses.length} warehouses');
       }
     } catch (e) {
-      print('  ❌ Download warehouses error: $e');
+      debugPrint('  ❌ Download warehouses error: $e');
       rethrow;
     }
   }
@@ -240,10 +240,10 @@ class SyncService with ChangeNotifier {
       final projects = await apiService.getProjects();
       if (projects.isNotEmpty) {
         await OfflineDatabase.cacheProjects(projects);
-        print('  ✅ Downloaded ${projects.length} projects');
+        debugPrint('  ✅ Downloaded ${projects.length} projects');
       }
     } catch (e) {
-      print('  ❌ Download projects error: $e');
+      debugPrint('  ❌ Download projects error: $e');
       rethrow;
     }
   }
@@ -289,7 +289,7 @@ class SyncService with ChangeNotifier {
         notes: notes,
       );
       
-      print('💾 Transaction saved locally');
+      debugPrint('💾 Transaction saved locally');
       await _updatePendingCount();
       
       // Try to sync immediately if online
@@ -299,7 +299,7 @@ class SyncService with ChangeNotifier {
       
       return true;
     } catch (e) {
-      print('❌ Failed to save transaction: $e');
+      debugPrint('❌ Failed to save transaction: $e');
       return false;
     }
   }
@@ -321,7 +321,7 @@ class SyncService with ChangeNotifier {
         fileType: fileType,
       );
       
-      print('💾 Photo saved locally: $filePath');
+      debugPrint('💾 Photo saved locally: $filePath');
       await _updatePendingCount();
       
       // Try to sync immediately if online
@@ -331,7 +331,7 @@ class SyncService with ChangeNotifier {
       
       return true;
     } catch (e) {
-      print('❌ Failed to save photo: $e');
+      debugPrint('❌ Failed to save photo: $e');
       return false;
     }
   }
@@ -347,7 +347,7 @@ class SyncService with ChangeNotifier {
           return materials.cast<Map<String, dynamic>>();
         }
       } catch (e) {
-        print('⚠️ Failed to fetch materials online: $e');
+        debugPrint('⚠️ Failed to fetch materials online: $e');
       }
     }
     
@@ -365,7 +365,7 @@ class SyncService with ChangeNotifier {
           return warehouses.cast<Map<String, dynamic>>();
         }
       } catch (e) {
-        print('⚠️ Failed to fetch warehouses online: $e');
+        debugPrint('⚠️ Failed to fetch warehouses online: $e');
       }
     }
     
@@ -382,7 +382,7 @@ class SyncService with ChangeNotifier {
           return projects.cast<Map<String, dynamic>>();
         }
       } catch (e) {
-        print('⚠️ Failed to fetch projects online: $e');
+        debugPrint('⚠️ Failed to fetch projects online: $e');
       }
     }
     

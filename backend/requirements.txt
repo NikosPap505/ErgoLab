@@ -37,7 +37,15 @@ pypdf==5.1.0  # Updated from pypdf2 (deprecated) to pypdf
 pillow==11.1.0
 
 # WebSockets for real-time
-websockets==14.1
+websockets==12.0
+python-socketio==5.10.0
+python-socketio[asyncio-client]==5.10.0
+
+# QR Code
+qrcode==7.4.2
+
+# Push Notifications
+firebase-admin==6.4.0
 
 # Performance Monitoring
 psutil==6.1.1

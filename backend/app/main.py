@@ -22,6 +22,7 @@ from app.api import (
     warehouses,
 )
 from app.api import reports_full
+from app.api import websockets
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, metrics, get_health_status
 
@@ -108,6 +109,7 @@ app.include_router(notifications.router)
 app.include_router(users.router)
 app.include_router(analytics.router)
 app.include_router(reports_full.router, prefix="/api/reports", tags=["Reports System"])
+app.include_router(websockets.router)
 
 
 @app.get("/")

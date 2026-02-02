@@ -103,45 +103,58 @@ class DailyReportResponse(BaseModel):
 class IssueCreate(BaseModel):
     project_id: int
     daily_report_id: Optional[int] = None
-    
+
     title: str
     description: str
     category: IssueCategoryEnum
     severity: IssueSeverityEnum
-    
+    status: IssueStatusEnum = IssueStatusEnum.open
+
     due_date: Optional[date] = None
     assigned_to: Optional[int] = None
 
 class IssueUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
     status: Optional[IssueStatusEnum] = None
+    severity: Optional[IssueSeverityEnum] = None
+    assigned_to: Optional[int] = None
     resolution_notes: Optional[str] = None
     resolution_cost: Optional[float] = None
     resolved_date: Optional[datetime] = None
     delay_days: Optional[int] = None
+
+
+class IssueMove(BaseModel):
+    """Schema for moving issue between columns"""
+    status: IssueStatusEnum
+    position: int
 
 class IssueResponse(BaseModel):
     id: int
     project_id: int
     project_name: Optional[str] = None
     daily_report_id: Optional[int]
-    
+
     title: str
     description: str
     category: str
     severity: str
     status: str
-    
+
     reported_date: datetime
     due_date: Optional[date]
     resolved_date: Optional[datetime]
-    
+
     resolution_notes: Optional[str]
     resolution_cost: Optional[float]
     delay_days: int
-    
+
     assigned_to: Optional[int]
+    assigned_to_name: Optional[str] = None
     reported_by: int
-    
+    reported_by_name: Optional[str] = None
+
     created_at: datetime
     updated_at: Optional[datetime]
     

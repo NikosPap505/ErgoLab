@@ -11,6 +11,10 @@ const Materials = () => {
   const [editingMaterial, setEditingMaterial] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [isQrLoading, setIsQrLoading] = useState(false);
   const { showNotification } = useNotification();
 
   const [formData, setFormData] = useState({
@@ -96,6 +100,41 @@ const Materials = () => {
     }
   };
 
+  const handleGenerateQR = async (material) => {
+    setIsQrLoading(true);
+    try {
+      const response = await api.get(`/api/materials/${material.id}/qr`);
+      setQrCode(response.data.qr_code);
+      setSelectedMaterial(material);
+      setShowQRModal(true);
+    } catch (_error) {
+      showNotification('Σφάλμα δημιουργίας QR', 'error');
+    } finally {
+      setIsQrLoading(false);
+    }
+  };
+
+  const handlePrintLabel = async (material) => {
+    try {
+      const response = await api.get(
+        `/api/materials/${material.id}/qr?printable=true&format=png`,
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([response.data], { type: 'image/png' });
+      const url = URL.createObjectURL(blob);
+
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+        });
+      }
+    } catch (_error) {
+      showNotification('Σφάλμα εκτύπωσης ετικέτας', 'error');
+    }
+  };
+
   const filteredMaterials = materials.filter(m =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -169,6 +208,13 @@ const Materials = () => {
                       className="text-primary-600 hover:text-primary-900 mr-4"
                     >
                       Επεξεργασία
+                    </button>
+                    <button
+                      onClick={() => handleGenerateQR(material)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                      disabled={isQrLoading}
+                    >
+                      📱 QR
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(material)}
@@ -311,6 +357,36 @@ const Materials = () => {
         title="Διαγραφή Υλικού"
         message={`Είστε σίγουροι ότι θέλετε να διαγράψετε το υλικό "${deleteConfirm?.name}";`}
       />
+
+      {showQRModal && selectedMaterial && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">{selectedMaterial.name}</h3>
+            {qrCode ? (
+              <img src={qrCode} alt="QR Code" className="w-full" />
+            ) : (
+              <div className="text-center py-12">Φόρτωση QR...</div>
+            )}
+            <p className="text-center text-sm text-gray-600 mt-4">
+              SKU: {selectedMaterial.sku}
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="btn-secondary flex-1"
+              >
+                Κλείσιμο
+              </button>
+              <button
+                onClick={() => handlePrintLabel(selectedMaterial)}
+                className="btn-primary flex-1"
+              >
+                🖨️ Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -291,6 +291,35 @@ class _CaptureScreenState extends State<CaptureScreen> {
               ),
               const SizedBox(height: 24),
 
+              if (_isCompressing) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: const Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Γίνεται συμπίεση φωτογραφίας...',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               // Title
               TextField(
                 controller: _titleController,
@@ -320,7 +349,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: _isUploading ? null : _uploadImage,
+                  onPressed: (_isUploading || _isCompressing) ? null : _uploadImage,
                   icon: _isUploading
                       ? const SizedBox(
                           width: 20,
@@ -332,7 +361,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         )
                       : const Icon(Icons.cloud_upload),
                   label: Text(
-                    _isUploading ? 'Αποθήκευση...' : 'Αποθήκευση Φωτογραφίας',
+                    _isCompressing
+                        ? 'Συμπίεση...'
+                        : (_isUploading ? 'Αποθήκευση...' : 'Αποθήκευση Φωτογραφίας'),
                     style: const TextStyle(fontSize: 16),
                   ),
                   style: ElevatedButton.styleFrom(

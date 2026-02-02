@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/connectivity_service.dart';
-import '../widgets/offline_widgets.dart';
+
 
 class AddStockScreen extends StatefulWidget {
   final Map<String, dynamic>? material;
@@ -135,7 +135,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             onPressed: () {
-              Navigator.of(context).pushReplacementNamed('/scanner');
+              Navigator.of(context).pushReplacementNamed('/qr-scanner');
             },
           ),
         ],
@@ -278,7 +278,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
                           prefixIcon: Icon(Icons.inventory_2),
                           hintText: 'Επιλέξτε υλικό',
                         ),
-                        value: _selectedMaterialId,
+                        initialValue: _selectedMaterialId,
                         isExpanded: true,
                         items: appState.materials.map<DropdownMenuItem<int>>((material) {
                           return DropdownMenuItem<int>(

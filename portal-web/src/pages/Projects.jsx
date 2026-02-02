@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -172,6 +173,12 @@ const Projects = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{project.location || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(project.status)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link
+                      to={`/projects/${project.id}`}
+                      className="text-primary-600 hover:text-primary-900 mr-4"
+                    >
+                      Λεπτομέρειες
+                    </Link>
                     <button
                       onClick={() => handleOpenModal(project)}
                       className="text-primary-600 hover:text-primary-900 mr-4"

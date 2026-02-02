@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
 import '../widgets/offline_widgets.dart';
 
@@ -127,7 +126,7 @@ class HomeScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.construction),
                     ),
-                    value: appState.selectedProjectId,
+                    initialValue: appState.selectedProjectId,
                     items: appState.projects.map<DropdownMenuItem<int>>((project) {
                       return DropdownMenuItem<int>(
                         value: project['id'],
@@ -148,7 +147,7 @@ class HomeScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.warehouse),
                     ),
-                    value: appState.selectedWarehouseId,
+                    initialValue: appState.selectedWarehouseId,
                     items: appState.warehouses.map<DropdownMenuItem<int>>((warehouse) {
                       return DropdownMenuItem<int>(
                         value: warehouse['id'],
@@ -179,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                   subtitle: 'Barcode/QR',
                   color: Colors.blue,
                   onTap: () {
-                    Navigator.of(context).pushNamed('/scanner');
+                    Navigator.of(context).pushNamed('/qr-scanner');
                   },
                 ),
                 _ActionCard(

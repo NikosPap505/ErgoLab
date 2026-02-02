@@ -1,33 +1,61 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc, and_, or_
 from app.core.database import get_db
 from app.core.permissions import Permission, check_permission
 from app.api.auth import get_current_user
+from app.core.websocket import manager
 from app.models.project import Project, ProjectAssignment
 from app.models.user import User, UserRole
 from app.models.notification import NotificationPreferences
 from app.services.email_service import EmailService
+from app.services.fcm_service import FCMService
 from app.models.material import Material
 from app.models.warehouse import Warehouse
 from app.models.inventory import StockTransaction
 from app.models.reports import (
     DailyReport, Issue, WorkItem, LaborLog, EquipmentLog,
-    ReportPhoto, IssuePhoto
+    ReportPhoto, IssuePhoto, IssueStatus
 )
 from app.schemas.reports import (
     DailyReportCreate, DailyReportResponse,
-    IssueCreate, IssueUpdate, IssueResponse,
+    IssueCreate, IssueUpdate, IssueResponse, IssueMove,
     WorkItemCreate, WorkItemUpdate, WorkItemResponse,
     LaborLogCreate, LaborLogResponse,
     EquipmentLogCreate, EquipmentLogResponse,
     WeeklySummary, MonthlySummary, FinalProjectReport
 )
 from datetime import datetime, timedelta, date
-from typing import List, Optional
+from typing import List, Optional, Dict
 import calendar
 
 router = APIRouter()
+
+
+def _issue_to_response(issue: Issue, project_name: str | None = None) -> IssueResponse:
+    return IssueResponse(
+        id=issue.id,
+        project_id=issue.project_id,
+        project_name=project_name,
+        daily_report_id=issue.daily_report_id,
+        title=issue.title,
+        description=issue.description,
+        category=issue.category.value if hasattr(issue.category, "value") else str(issue.category),
+        severity=issue.severity.value if hasattr(issue.severity, "value") else str(issue.severity),
+        status=issue.status.value if hasattr(issue.status, "value") else str(issue.status),
+        reported_date=issue.reported_date,
+        due_date=issue.due_date,
+        resolved_date=issue.resolved_date,
+        resolution_notes=issue.resolution_notes,
+        resolution_cost=issue.resolution_cost,
+        delay_days=issue.delay_days or 0,
+        assigned_to=issue.assigned_to,
+        assigned_to_name=issue.assigned_user.full_name if issue.assigned_user else None,
+        reported_by=issue.reported_by,
+        reported_by_name=issue.reporter.full_name if issue.reporter else None,
+        created_at=issue.created_at,
+        updated_at=issue.updated_at,
+    )
 
 # ==================== DAILY REPORTS ====================
 
@@ -79,28 +107,53 @@ async def create_daily_report(
         managers = db.query(User).filter(User.role == UserRole.ADMIN).all()
 
     for manager in managers:
-        if not manager.email:
-            continue
-
         prefs = (
             db.query(NotificationPreferences)
             .filter(NotificationPreferences.user_id == manager.id)
             .first()
         )
 
-        if prefs and not prefs.email_daily_reports:
-            continue
+        if manager.email and (not prefs or prefs.email_daily_reports):
+            background_tasks.add_task(
+                EmailService.send_daily_report_summary,
+                recipient=manager.email,
+                project_name=project.name if project else "",
+                report_date=db_report.report_date.strftime("%d/%m/%Y"),
+                workers_count=db_report.workers_count or 0,
+                progress_percentage=db_report.progress_percentage or 0.0,
+                issues_count=len(db_report.issues or []),
+                report_id=db_report.id,
+            )
 
-        background_tasks.add_task(
-            EmailService.send_daily_report_summary,
-            recipient=manager.email,
-            project_name=project.name if project else "",
-            report_date=db_report.report_date.strftime("%d/%m/%Y"),
-            workers_count=db_report.workers_count or 0,
-            progress_percentage=db_report.progress_percentage or 0.0,
-            issues_count=len(db_report.issues or []),
-            report_id=db_report.id,
+        await FCMService.send_to_user(
+            db=db,
+            user_id=manager.id,
+            title=f"Νέα Αναφορά - {project.name if project else ''}",
+            body=(
+                f"Πρόοδος: {report.progress_percentage}% - {current_user.full_name}"
+            ),
+            data={
+                "type": "daily_report",
+                "report_id": str(db_report.id),
+                "project_id": str(report.project_id),
+                "screen": "ReportDetail",
+            },
+            notification_type="daily_report",
         )
+
+    await manager.broadcast_to_project(
+        project_id=report.project_id,
+        message={
+            "type": "daily_report_created",
+            "report_id": db_report.id,
+            "project_id": report.project_id,
+            "created_by": current_user.full_name,
+            "report_date": str(report.report_date),
+            "progress": report.progress_percentage,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+        exclude_user=current_user.id,
+    )
 
     return response
 
@@ -245,6 +298,59 @@ async def create_issue(
                     issue_id=db_issue.id,
                 )
 
+        await FCMService.send_to_user(
+            db=db,
+            user_id=db_issue.assigned_to,
+            title="Νέο Issue που σας ανατέθηκε",
+            body=f"{db_issue.title}",
+            data={
+                "type": "issue_assigned",
+                "issue_id": str(db_issue.id),
+                "screen": "IssueDetail",
+            },
+            notification_type="issue",
+        )
+
+    severity_value = (
+        db_issue.severity.value
+        if hasattr(db_issue.severity, "value")
+        else str(db_issue.severity)
+    )
+
+    if severity_value == "critical":
+        await FCMService.send_critical_alert(
+            db=db,
+            title="Κρίσιμο Πρόβλημα",
+            body=f"{db_issue.title} - {current_user.full_name}",
+            data={
+                "type": "critical_issue",
+                "issue_id": str(db_issue.id),
+                "project_id": str(db_issue.project_id),
+                "screen": "IssueDetail",
+            },
+        )
+        await manager.broadcast_to_all({
+            "type": "critical_issue",
+            "issue_id": db_issue.id,
+            "title": db_issue.title,
+            "project_id": db_issue.project_id,
+            "severity": severity_value,
+            "reported_by": current_user.full_name,
+            "timestamp": datetime.utcnow().isoformat(),
+        })
+    else:
+        await manager.broadcast_to_project(
+            project_id=db_issue.project_id,
+            message={
+                "type": "issue_created",
+                "issue_id": db_issue.id,
+                "title": db_issue.title,
+                "severity": severity_value,
+                "reported_by": current_user.full_name,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
+
     return response
 
 @router.get("/issues", response_model=List[IssueResponse])
@@ -283,6 +389,44 @@ async def get_issues(
     
     return results
 
+
+@router.get("/issues/kanban", response_model=Dict[str, List[IssueResponse]])
+async def get_issues_kanban(
+    project_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user = Depends(check_permission(Permission.ISSUE_READ)),
+):
+    """Get issues organized by status for Kanban board"""
+
+    query = (
+        db.query(Issue)
+        .options(
+            joinedload(Issue.reporter),
+            joinedload(Issue.assigned_user),
+            joinedload(Issue.project),
+        )
+        .filter(Issue.status != IssueStatus.CLOSED)
+    )
+
+    if project_id:
+        query = query.filter(Issue.project_id == project_id)
+
+    issues = query.order_by(Issue.created_at.desc()).all()
+
+    kanban = {
+        "open": [],
+        "in_progress": [],
+        "resolved": [],
+    }
+
+    for issue in issues:
+        status_key = issue.status.value if hasattr(issue.status, "value") else str(issue.status)
+        if status_key in kanban:
+            project_name = issue.project.name if issue.project else None
+            kanban[status_key].append(_issue_to_response(issue, project_name))
+
+    return kanban
+
 @router.get("/issues/{issue_id}", response_model=IssueResponse)
 async def get_issue(
     issue_id: int,
@@ -313,6 +457,8 @@ async def update_issue(
     db_issue = db.query(Issue).filter(Issue.id == issue_id).first()
     if not db_issue:
         raise HTTPException(status_code=404, detail="Δεν βρέθηκε πρόβλημα")
+
+    old_status = db_issue.status
     
     update_data = issue_update.dict(exclude_unset=True)
     for key, value in update_data.items():
@@ -324,8 +470,114 @@ async def update_issue(
     project = db.query(Project).filter(Project.id == db_issue.project_id).first()
     response = IssueResponse.model_validate(db_issue)
     response.project_name = project.name if project else None
+
+    if "status" in update_data:
+        new_status = db_issue.status
+        if old_status != new_status:
+            await manager.broadcast_to_project(
+                project_id=db_issue.project_id,
+                message={
+                    "type": "issue_status_changed",
+                    "issue_id": issue_id,
+                    "old_status": old_status,
+                    "new_status": new_status,
+                    "changed_by": current_user.full_name,
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
+            )
     
     return response
+
+
+@router.put("/issues/{issue_id}/move", response_model=IssueResponse)
+async def move_issue(
+    issue_id: int,
+    move_data: IssueMove,
+    db: Session = Depends(get_db),
+    current_user = Depends(check_permission(Permission.ISSUE_UPDATE)),
+):
+    """Move issue to different status (Kanban drag & drop)"""
+
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    old_status = issue.status
+    issue.status = IssueStatus(move_data.status.value)
+
+    if move_data.status.value == IssueStatus.RESOLVED.value and old_status != IssueStatus.RESOLVED:
+        issue.resolved_date = datetime.utcnow()
+
+    if old_status == IssueStatus.RESOLVED and move_data.status.value != IssueStatus.RESOLVED.value:
+        issue.resolved_date = None
+
+    db.commit()
+    db.refresh(issue)
+
+    await manager.broadcast_to_project(
+        project_id=issue.project_id,
+        message={
+            "type": "issue_moved",
+            "issue_id": issue_id,
+            "project_id": issue.project_id,
+            "old_status": old_status.value if hasattr(old_status, "value") else str(old_status),
+            "new_status": move_data.status.value,
+            "moved_by": current_user.full_name,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+        exclude_user=current_user.id,
+    )
+
+    db.refresh(issue)
+
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
+    return _issue_to_response(issue, project.name if project else None)
+
+
+@router.put("/issues/{issue_id}/assign", response_model=IssueResponse)
+async def assign_issue_kanban(
+    issue_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(check_permission(Permission.ISSUE_ASSIGN)),
+):
+    """Assign issue to a user"""
+
+    issue = db.query(Issue).filter(Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    issue.assigned_to = user_id
+    db.commit()
+    db.refresh(issue)
+
+    await manager.send_personal_message(
+        message={
+            "type": "issue_assigned",
+            "issue_id": issue_id,
+            "issue_title": issue.title,
+            "assigned_by": current_user.full_name,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+        user_id=user_id,
+    )
+
+    await manager.broadcast_to_project(
+        project_id=issue.project_id,
+        message={
+            "type": "issue_assignment_changed",
+            "issue_id": issue_id,
+            "assigned_to": user.full_name,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
+
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
+    return _issue_to_response(issue, project.name if project else None)
 
 
 @router.put("/issues/{issue_id}/assign/{user_id}", response_model=IssueResponse)

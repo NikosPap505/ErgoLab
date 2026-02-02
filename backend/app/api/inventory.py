@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Dict, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
@@ -13,8 +14,16 @@ from app.models.user import User, UserRole
 from app.models.warehouse import Warehouse
 from app.schemas.inventory import InventoryStockResponse, StockTransactionCreate
 from app.services.email_service import EmailService
+from app.services.fcm_service import FCMService
 
 router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
+
+
+class ScanData(BaseModel):
+    type: str
+    id: int
+    action: str
+    additional_data: Dict[str, Any] = {}
 
 
 @router.get("/warehouse/{warehouse_id}", response_model=List[InventoryStockResponse])
@@ -108,7 +117,7 @@ def get_low_stock_materials(db: Session = Depends(get_db)):
 
 
 @router.post("/transaction", status_code=status.HTTP_201_CREATED)
-def create_stock_transaction(
+async def create_stock_transaction(
     transaction: StockTransactionCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -210,4 +219,96 @@ def create_stock_transaction(
                 warehouse_name=stock.warehouse.name if stock.warehouse else "",
             )
 
+        await FCMService.send_to_role(
+            db=db,
+            role="manager",
+            title="⚠️ Χαμηλό Απόθεμα",
+            body=(
+                f"{stock.material.name} - Απομένουν {stock.quantity} "
+                f"{stock.material.unit.value if hasattr(stock.material.unit, 'value') else stock.material.unit}"
+            ),
+            data={
+                "type": "low_stock",
+                "material_id": str(stock.material.id),
+                "warehouse_id": str(stock.warehouse_id),
+                "screen": "MaterialDetail",
+            },
+        )
+
+        await FCMService.send_to_role(
+            db=db,
+            role="admin",
+            title="⚠️ Χαμηλό Απόθεμα",
+            body=(
+                f"{stock.material.name} - Απομένουν {stock.quantity} "
+                f"{stock.material.unit.value if hasattr(stock.material.unit, 'value') else stock.material.unit}"
+            ),
+            data={
+                "type": "low_stock",
+                "material_id": str(stock.material.id),
+                "warehouse_id": str(stock.warehouse_id),
+                "screen": "MaterialDetail",
+            },
+        )
+
     return {"message": "Transaction completed", "new_quantity": stock.quantity}
+
+
+@router.post("/scan")
+def handle_qr_scan(
+    scan_data: ScanData,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if scan_data.type == "material":
+        material = db.query(Material).filter(Material.id == scan_data.id).first()
+        if not material:
+            raise HTTPException(status_code=404, detail="Material not found")
+
+        stocks = (
+            db.query(InventoryStock)
+            .join(Warehouse, InventoryStock.warehouse_id == Warehouse.id)
+            .filter(InventoryStock.material_id == scan_data.id)
+            .all()
+        )
+
+        return {
+            "type": "material",
+            "data": {
+                "id": material.id,
+                "sku": material.sku,
+                "name": material.name,
+                "category": material.category,
+                "unit": material.unit.value if hasattr(material.unit, "value") else str(material.unit),
+                "cost": float(material.unit_price) if material.unit_price is not None else 0,
+                "stocks": [
+                    {
+                        "warehouse_id": stock.warehouse_id,
+                        "warehouse_name": stock.warehouse.name if stock.warehouse else "",
+                        "quantity": stock.quantity,
+                    }
+                    for stock in stocks
+                ],
+            },
+        }
+
+    if scan_data.type == "equipment":
+        return {"type": "equipment", "message": "Equipment scanning coming soon"}
+
+    if scan_data.type == "worker":
+        user = db.query(User).filter(User.id == scan_data.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Worker not found")
+
+        role_value = user.role.value if hasattr(user.role, "value") else str(user.role)
+        return {
+            "type": "worker",
+            "data": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "role": role_value,
+            },
+        }
+
+    raise HTTPException(status_code=400, detail="Unknown QR type")

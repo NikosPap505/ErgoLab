@@ -1,7 +1,9 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
+import base64
 
 from app.api.auth import get_current_user
 from app.core.database import get_db
@@ -9,6 +11,7 @@ from app.core.cache import cache, CacheKeys
 from app.models.material import Material
 from app.models.user import User
 from app.schemas.material import MaterialCreate, MaterialResponse, MaterialUpdate
+from app.services.qr_service import qr_service
 
 router = APIRouter(prefix="/api/materials", tags=["Materials"])
 
@@ -146,3 +149,74 @@ def delete_material(
     cache.clear_pattern("materials:list:*")
     
     return None
+
+
+@router.get("/{material_id}/qr")
+def get_material_qr(
+    material_id: int,
+    format: str = "base64",
+    printable: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    qr_base64 = qr_service.generate_material_qr(
+        material_id=material.id,
+        sku=material.sku,
+        name=material.name,
+        category=material.category or "",
+    )
+
+    if printable:
+        label = qr_service.generate_printable_label(
+            qr_base64=qr_base64,
+            title=material.name,
+            subtitle=f"SKU: {material.sku}",
+            info_text=f"Category: {material.category or '-'}",
+        )
+
+        if format == "png":
+            img_data = base64.b64decode(label.split(",")[1])
+            return Response(content=img_data, media_type="image/png")
+        return {"qr_code": label, "material_id": material_id}
+
+    if format == "png":
+        img_data = base64.b64decode(qr_base64.split(",")[1])
+        return Response(content=img_data, media_type="image/png")
+
+    return {
+        "qr_code": qr_base64,
+        "material_id": material_id,
+        "sku": material.sku,
+        "name": material.name,
+    }
+
+
+@router.get("/qr/batch")
+def generate_batch_qr(
+    material_ids: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ids = [int(item_id) for item_id in material_ids.split(",") if item_id.strip()]
+    materials = db.query(Material).filter(Material.id.in_(ids)).all()
+
+    qr_codes = []
+    for material in materials:
+        qr_base64 = qr_service.generate_material_qr(
+            material_id=material.id,
+            sku=material.sku,
+            name=material.name,
+            category=material.category or "",
+        )
+        qr_codes.append({
+            "material_id": material.id,
+            "sku": material.sku,
+            "name": material.name,
+            "qr_code": qr_base64,
+        })
+
+    return qr_codes

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "186196273659",
+    "project_id": "ergolab-98b61",
+    "storage_bucket": "ergolab-98b61.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:186196273659:android:bc2ee16e96323b681f035e",
+        "android_client_info": {
+          "package_name": "com.ergolab.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2ac1QVMeOZD4-GDALHRyoXjWlWs0EGbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
