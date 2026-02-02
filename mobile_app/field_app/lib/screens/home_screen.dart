@@ -37,6 +37,7 @@ class HomeScreen extends StatelessWidget {
           const SyncStatusIndicator(),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Ανανέωση δεδομένων',
             onPressed: () async {
               final success = await appState.refreshData();
               if (context.mounted) {
@@ -54,6 +55,7 @@ class HomeScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Αποσύνδεση',
             onPressed: () async {
               await appState.logout();
               if (context.mounted) {

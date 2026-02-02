@@ -172,6 +172,34 @@ class ApiService {
     }
   }
 
+  /// Updates a material's information
+  Future<Map<String, dynamic>?> updateMaterial({
+    required int materialId,
+    String? name,
+    String? category,
+    String? unit,
+    num? cost,
+    int? minStock,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (category != null) data['category'] = category;
+      if (unit != null) data['unit'] = unit;
+      if (cost != null) data['cost'] = cost;
+      if (minStock != null) data['min_stock'] = minStock;
+
+      final response = await _dio.put(
+        '/api/materials/$materialId',
+        data: data,
+      );
+      return response.data as Map<String, dynamic>?;
+    } catch (e) {
+      debugPrint('Update material error: $e');
+      return null;
+    }
+  }
+
   Future<bool> addStockTransaction({
     required int warehouseId,
     required int materialId,

@@ -131,6 +131,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Ανανέωση αποθέματος',
             onPressed: _loadInventory,
           ),
         ],

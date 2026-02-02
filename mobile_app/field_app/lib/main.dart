@@ -1,6 +1,7 @@
 // lib/main.dart - COMPLETE FIX
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,6 +19,7 @@ import 'screens/qr_scanner_screen.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
 import 'screens/notification_settings_screen.dart';
+import 'screens/scan_history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +28,51 @@ void main() async {
   ApiService.validateBaseUrl();
   
   await Firebase.initializeApp();
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  
+  // Set up global error handlers
+  FlutterError.onError = (details) {
+    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+  };
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
+  
+  // Custom error widget for release mode - shows user-friendly error
+  if (kReleaseMode) {
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text(
+                      'Παρουσιάστηκε σφάλμα',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Παρακαλώ επανεκκινήστε την εφαρμογή.',
+                      style: TextStyle(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    };
+  }
+  
   unawaited(NotificationService().initialize().catchError((e, stack) {
     FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
   }));
@@ -92,6 +134,7 @@ class MyApp extends StatelessWidget {
                   '/inventory': (context) => const InventoryScreen(),
                   '/capture': (context) => const CaptureScreen(),
                   '/qr-scanner': (context) => const QRScannerScreen(),
+                  '/scan-history': (context) => const ScanHistoryScreen(),
                   '/notification-settings': (context) => const NotificationSettingsScreen(),
                 };
 

@@ -5,7 +5,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/qr_service.dart';
+import '../services/offline_database.dart';
 import '../widgets/material_detail_sheet.dart';
+import '../widgets/material_edit_sheet.dart';
+import '../widgets/worker_detail_sheet.dart';
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
@@ -16,11 +19,23 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
   late final QRService _qrService;
-  final MobileScannerController cameraController = MobileScannerController();
+  // Optimized scanner configuration:
+  // - Lower resolution for faster processing
+  // - Specific formats to reduce CPU work
+  // - Return image disabled to save memory
+  late final MobileScannerController cameraController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.normal,
+    facing: CameraFacing.back,
+    torchEnabled: false,
+    formats: const [BarcodeFormat.qrCode, BarcodeFormat.dataMatrix],
+    returnImage: false,
+  );
   bool _isProcessing = false;
   bool _cameraReady = false;
   bool _isDisposed = false;
   Timer? _restartTimer;
+  DateTime? _lastScanTime;
+  static const _scanCooldown = Duration(milliseconds: 500);
 
   @override
   void initState() {
@@ -63,6 +78,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         title: const Text('Σάρωση QR Code'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Ιστορικό σαρώσεων',
+            onPressed: () => Navigator.pushNamed(context, '/scan-history'),
+          ),
+          IconButton(
             icon: ValueListenableBuilder(
               valueListenable: cameraController.torchState,
               builder: (context, state, child) {
@@ -89,9 +109,17 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             onDetect: (capture) {
               if (_isProcessing || !_cameraReady) return;
 
+              // Debounce rapid scans to prevent duplicate processing
+              final now = DateTime.now();
+              if (_lastScanTime != null &&
+                  now.difference(_lastScanTime!) < _scanCooldown) {
+                return;
+              }
+              _lastScanTime = now;
+
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
-                if (barcode.rawValue != null) {
+                if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
                   _handleQRCode(barcode.rawValue!);
                   break;
                 }
@@ -145,7 +173,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     );
   }
 
-  Future<void> _handleQRCode(String rawValue) async {
+  Future<void> _handleQRCode(String rawValue, {int retryCount = 0}) async {
+    const maxRetries = 2;
+    
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
@@ -157,6 +187,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       final type = result['type'];
       final data = result['data'];
 
+      // Save to scan history
+      await _saveScanToHistory(
+        rawValue: rawValue,
+        resultType: type as String?,
+        resultData: data is Map<String, dynamic> ? data : null,
+      );
+
       if (type == 'material' && data is Map<String, dynamic>) {
         _showMaterialDetail(data);
       } else if (type == 'worker' && data is Map<String, dynamic>) {
@@ -165,11 +202,83 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         _showError('Μη υποστηριζόμενο QR code');
       }
     } catch (e) {
-      _showError('Σφάλμα σάρωσης: $e');
+      // Save error to history
+      await _saveScanToHistory(
+        rawValue: rawValue,
+        resultType: 'error',
+        resultData: {'error': e.toString()},
+      );
+
+      if (retryCount < maxRetries) {
+        // Retry after a short delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted && !_isDisposed) {
+          setState(() => _isProcessing = false);
+          return _handleQRCode(rawValue, retryCount: retryCount + 1);
+        }
+      } else {
+        _showErrorWithRetry(
+          'Σφάλμα σάρωσης: $e',
+          () => _handleQRCode(rawValue, retryCount: 0),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
       }
+    }
+  }
+
+  void _showErrorWithRetry(String message, VoidCallback onRetry) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Επανάληψη',
+          textColor: Colors.white,
+          onPressed: () {
+            if (mounted && !_isDisposed) {
+              onRetry();
+            }
+          },
+        ),
+      ),
+    );
+
+    _restartTimer?.cancel();
+    _restartTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && !_isDisposed) {
+        cameraController.start();
+      }
+    });
+  }
+
+  /// Saves a scan to local history database
+  Future<void> _saveScanToHistory({
+    required String rawValue,
+    String? resultType,
+    Map<String, dynamic>? resultData,
+  }) async {
+    try {
+      String? resultName;
+      if (resultData != null) {
+        resultName = resultData['name'] as String? ??
+            resultData['full_name'] as String? ??
+            resultData['sku'] as String?;
+      }
+
+      await OfflineDatabase.addScanToHistory(
+        rawValue: rawValue,
+        scanType: 'qr',
+        resultType: resultType,
+        resultName: resultName,
+        resultData: resultData,
+      );
+    } catch (e) {
+      // Silently fail - scan history is non-critical
+      debugPrint('Failed to save scan to history: $e');
     }
   }
 
@@ -194,47 +303,46 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             _showError('Μη έγκυρα δεδομένα υλικού');
           }
         },
+        onEdit: () {
+          Navigator.pop(context);
+          _showMaterialEdit(materialData);
+        },
+      ),
+    );
+  }
+
+  void _showMaterialEdit(Map<String, dynamic> materialData) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MaterialEditSheet(
+        materialData: materialData,
+        onClose: () {
+          Navigator.pop(context);
+          if (!mounted || _isDisposed) return;
+          cameraController.start();
+        },
+        onSaved: (updatedData) {
+          // Could refresh or show updated data
+          _showMaterialDetail(updatedData);
+        },
       ),
     );
   }
 
   void _showWorkerDetail(Map<String, dynamic> workerData) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(workerData['full_name']?.toString() ?? 'Worker'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Username: ${workerData['username'] ?? '-'}'),
-            Text('Role: ${workerData['role'] ?? '-'}'),
-            const SizedBox(height: 20),
-            const Text('Τι θέλετε να κάνετε;'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (!mounted || _isDisposed) return;
-              cameraController.start();
-            },
-            child: const Text('Ακύρωση'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final id = _parseId(workerData['id']);
-              if (id != null) {
-                _handleWorkerCheckIn(id);
-              } else {
-                _showError('Μη έγκυρα δεδομένα εργαζομένου');
-              }
-            },
-            child: const Text('Check In'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => WorkerDetailSheet(
+        workerData: workerData,
+        onClose: () {
+          Navigator.pop(context);
+          if (!mounted || _isDisposed) return;
+          cameraController.start();
+        },
       ),
     );
   }
@@ -264,12 +372,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       if (!mounted || _isDisposed) return;
       cameraController.start();
     });
-  }
-
-  Future<void> _handleWorkerCheckIn(int workerId) async {
-    _showError('Worker check-in coming soon');
-    if (!mounted || _isDisposed) return;
-    cameraController.start();
   }
 
   @override

@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 
+/// Bottom sheet displaying material details with stock information.
 class MaterialDetailSheet extends StatelessWidget {
   final Map<String, dynamic> materialData;
   final VoidCallback onClose;
   final VoidCallback onTransaction;
+  final VoidCallback? onEdit;
+
+  // Sheet sizing constants
+  static const double _initialSheetSize = 0.6;  // 60% of screen height on open
+  static const double _minSheetSize = 0.4;      // Minimum 40% when dragged down
+  static const double _maxSheetSize = 0.9;      // Maximum 90% when dragged up
 
   const MaterialDetailSheet({
     super.key,
     required this.materialData,
     required this.onClose,
     required this.onTransaction,
+    this.onEdit,
   });
 
   @override
@@ -24,9 +32,9 @@ class MaterialDetailSheet extends StatelessWidget {
     final stockList = stocks is List ? stocks : const [];
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
+      initialChildSize: _initialSheetSize,
+      minChildSize: _minSheetSize,
+      maxChildSize: _maxSheetSize,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -89,35 +97,44 @@ class MaterialDetailSheet extends StatelessWidget {
                     icon: const Icon(Icons.close),
                     onPressed: onClose,
                   ),
+                  if (onEdit != null)
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.orange),
+                      onPressed: onEdit,
+                      tooltip: 'Επεξεργασία',
+                    ),
                 ],
               ),
               const SizedBox(height: 24),
 
+              // Material info section
+              _buildInfoRow('Κατηγορία', category),
+              _buildInfoRow('Μονάδα', unit),
+              _buildInfoRow('Κόστος', cost),
+              const SizedBox(height: 20),
+
+              const Text(
+                'Διαθέσιμα Αποθέματα',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Stock list with lazy loading via ListView.builder
               Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  children: [
-                    _buildInfoRow('Κατηγορία', category),
-                    _buildInfoRow('Μονάδα', unit),
-                    _buildInfoRow(
-                      'Κόστος',
-                      cost,
-                    ),
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      'Διαθέσιμα Αποθέματα',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (stockList.isNotEmpty)
-                      ...List.generate(
-                        stockList.length,
-                        (index) {
+                child: stockList.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Δεν υπάρχουν διαθέσιμα αποθέματα',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        itemCount: stockList.length,
+                        itemBuilder: (context, index) {
                           final item = stockList[index];
                           final stock = item is Map<String, dynamic> ? item : <String, dynamic>{};
                           return Card(
@@ -136,8 +153,6 @@ class MaterialDetailSheet extends StatelessWidget {
                           );
                         },
                       ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 16),
