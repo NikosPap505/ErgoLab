@@ -1,8 +1,8 @@
 import enum
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, update
+from sqlalchemy.orm import relationship, Session
 
 from app.core.database import Base
 
@@ -31,6 +31,38 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime)
+    
+    # Account lockout fields
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime, nullable=True)
+
+    def is_locked(self) -> bool:
+        """Check if account is currently locked"""
+        if self.locked_until is None:
+            return False
+        return datetime.now(timezone.utc) < self.locked_until
+
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
+
+
+class User(Base):
+    # ... existing code ...
+
+    def increment_failed_attempts(self, db: Session) -> None:
+        """Increment failed login attempts and lock if threshold reached"""
+        self.failed_login_attempts += 1
+        
+        if self.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+            self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)
+        
+        db.commit()
+        db.refresh(self)
+
+    def reset_failed_attempts(self) -> None:
+        """Reset failed attempts and unlock account"""
+        self.failed_login_attempts = 0
+        self.locked_until = None
 
     assigned_projects = relationship("ProjectAssignment", back_populates="user")
     stock_transactions = relationship("StockTransaction", back_populates="user")

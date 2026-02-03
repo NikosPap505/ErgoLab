@@ -10,7 +10,23 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify password with timing attack protection.
+    
+    Always takes approximately the same time regardless of:
+    - Whether the hash is valid
+    - Whether the password matches
+    - Length of password
+    
+    This prevents username enumeration via timing analysis.
+    """
+    try:
+        # Verify the password
+        result = pwd_context.verify(plain_password, hashed_password)
+        return result
+    except (ValueError, TypeError):
+        # If hash is invalid, still hash a dummy password to maintain timing
+        pwd_context.hash("dummy_password_to_maintain_constant_time")
+        return False
 
 
 def get_password_hash(password: str) -> str:

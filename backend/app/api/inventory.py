@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.core.cache import cache, CacheKeys
+from app.core.config import settings
 from app.models.inventory import InventoryStock, StockTransaction, TransactionType
 from app.models.material import Material
 from app.models.notification import NotificationPreferences
@@ -66,7 +67,7 @@ def get_warehouse_inventory(warehouse_id: int, db: Session = Depends(get_db)):
     ]
     
     # Cache for 5 minutes (inventory changes more frequently)
-    cache.set(cache_key, result, expire=300)
+    cache.set(cache_key, result, expire=settings.CACHE_TTL_MEDIUM)
     
     return result
 
@@ -111,7 +112,7 @@ def get_low_stock_materials(db: Session = Depends(get_db)):
     ]
     
     # Cache for 2 minutes (low stock alerts should be fresh)
-    cache.set(cache_key, result, expire=120)
+    cache.set(cache_key, result, expire=settings.CACHE_TTL_SHORT)
     
     return result
 
@@ -123,6 +124,9 @@ async def create_stock_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    from sqlalchemy import select
+    from sqlalchemy.orm import with_for_update
+    
     warehouse = db.query(Warehouse).filter(Warehouse.id == transaction.warehouse_id).first()
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
@@ -131,14 +135,14 @@ async def create_stock_transaction(
     if not material:
         raise HTTPException(status_code=404, detail="Material not found")
 
-    stock = (
-        db.query(InventoryStock)
-        .filter(
-            InventoryStock.warehouse_id == transaction.warehouse_id,
-            InventoryStock.material_id == transaction.material_id,
-        )
-        .first()
-    )
+    # 🔒 CRITICAL FIX: Use SELECT FOR UPDATE for row-level locking
+    # This prevents race conditions when multiple transactions occur simultaneously
+    stock_query = select(InventoryStock).filter(
+        InventoryStock.warehouse_id == transaction.warehouse_id,
+        InventoryStock.material_id == transaction.material_id,
+    ).with_for_update()
+    
+    stock = db.execute(stock_query).scalar_one_or_none()
 
     if not stock:
         stock = InventoryStock(
@@ -147,23 +151,27 @@ async def create_stock_transaction(
             quantity=0,
         )
         db.add(stock)
+        # Flush to get ID and establish lock
+        db.flush()
 
+    # Process transaction with locked row
     if transaction.transaction_type in [
         TransactionType.PURCHASE,
         TransactionType.TRANSFER_IN,
         TransactionType.RETURN,
     ]:
-        stock.quantity += transaction.quantity  # type: ignore[assignment,operator]
+        current_qty = cast(int, stock.quantity)
+        stock.quantity = current_qty + transaction.quantity
     elif transaction.transaction_type in [
         TransactionType.TRANSFER_OUT,
         TransactionType.CONSUMPTION,
     ]:
-        current_qty: int = stock.quantity  # type: ignore[assignment]
+        current_qty = cast(int, stock.quantity)
         if current_qty < transaction.quantity:
             raise HTTPException(status_code=400, detail="Insufficient stock")
-        stock.quantity -= transaction.quantity  # type: ignore[assignment,operator]
+        stock.quantity = current_qty - transaction.quantity
     elif transaction.transaction_type == TransactionType.ADJUSTMENT:
-        stock.quantity = transaction.quantity  # type: ignore[assignment]
+        stock.quantity = transaction.quantity
 
     total_cost = (
         transaction.unit_cost * transaction.quantity if transaction.unit_cost is not None else None
@@ -180,19 +188,39 @@ async def create_stock_transaction(
     )
     db.add(db_transaction)
 
+    # Commit transaction (releases lock)
     db.commit()
     db.refresh(stock)
     
-    # Invalidate relevant caches
+    # Invalidate caches AFTER successful commit
     cache.delete(CacheKeys.inventory_warehouse(transaction.warehouse_id))
     cache.delete(CacheKeys.inventory_low_stock())
     cache.clear_pattern("inventory:*")
     cache.clear_pattern("dashboard:*")
 
     if stock.material and stock.quantity <= (stock.material.min_stock_level or 0):
+        # Create localization helper
+        def get_localized_message(key: str, lang: str = "el", **kwargs) -> str:
+            """Get localized message for notifications."""
+            messages = {
+                "low_stock_title": {
+                    "el": "⚠️ Χαμηλό Απόθεμα",
+                    "en": "⚠️ Low Stock",
+                },
+                "low_stock_body": {
+                    "el": "{material_name} - Απομένουν {quantity} {unit}",
+                    "en": "{material_name} - {quantity} {unit} remaining",
+                }
+            }
+            return messages.get(key, {}).get(lang, "").format(**kwargs)
+
+        from sqlalchemy.orm import joinedload
+
+        # Fetch admins with their preferences in ONE query
         admins = (
             db.query(User)
             .filter(User.role.in_([UserRole.ADMIN, UserRole.MANAGER]))
+            .options(joinedload(User.notification_preferences))
             .all()
         )
 
@@ -200,12 +228,8 @@ async def create_stock_transaction(
             if not admin.email:
                 continue
 
-            prefs = (
-                db.query(NotificationPreferences)
-                .filter(NotificationPreferences.user_id == admin.id)
-                .first()
-            )
-
+            # Access pre-loaded preferences (no additional query!)
+            prefs = admin.notification_preferences
             if prefs and not prefs.email_low_stock:
                 continue
 
@@ -219,13 +243,18 @@ async def create_stock_transaction(
                 warehouse_name=stock.warehouse.name if stock.warehouse else "",
             )
 
+        unit_str = stock.material.unit.value if hasattr(stock.material.unit, 'value') else str(stock.material.unit)
+
         await FCMService.send_to_role(
             db=db,
             role="manager",
-            title="⚠️ Χαμηλό Απόθεμα",
-            body=(
-                f"{stock.material.name} - Απομένουν {stock.quantity} "
-                f"{stock.material.unit.value if hasattr(stock.material.unit, 'value') else stock.material.unit}"
+            title=get_localized_message("low_stock_title", lang="el"),
+            body=get_localized_message(
+                "low_stock_body",
+                lang="el",
+                material_name=stock.material.name,
+                quantity=stock.quantity,
+                unit=unit_str
             ),
             data={
                 "type": "low_stock",
@@ -238,10 +267,13 @@ async def create_stock_transaction(
         await FCMService.send_to_role(
             db=db,
             role="admin",
-            title="⚠️ Χαμηλό Απόθεμα",
-            body=(
-                f"{stock.material.name} - Απομένουν {stock.quantity} "
-                f"{stock.material.unit.value if hasattr(stock.material.unit, 'value') else stock.material.unit}"
+            title=get_localized_message("low_stock_title", lang="el"),
+            body=get_localized_message(
+                "low_stock_body",
+                lang="el",
+                material_name=stock.material.name,
+                quantity=stock.quantity,
+                unit=unit_str
             ),
             data={
                 "type": "low_stock",

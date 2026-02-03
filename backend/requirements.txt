@@ -18,6 +18,7 @@ python-jose[cryptography]==3.3.0  # TODO: Consider upgrading to newer version or
 passlib[bcrypt]==1.7.4
 bcrypt==4.2.1  # Updated from 3.2.2 for security improvements
 python-dotenv==1.0.1
+slowapi==0.1.9  # Rate limiting for brute force protection
 
 # S3/MinIO
 boto3==1.35.94

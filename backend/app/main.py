@@ -1,15 +1,22 @@
 from contextlib import asynccontextmanager
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import logging
+import sys
 
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from app.api import (
     analytics,
     annotations,
+    audit,
     auth,
     documents,
     inventory,
@@ -24,6 +31,7 @@ from app.api import (
 from app.api import reports_full
 from app.api import websockets
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.core.metrics import MetricsMiddleware, metrics, get_health_status
 
 
@@ -52,26 +60,34 @@ def _ensure_s3_bucket_sync():
         print(f"⚠ Warning: Could not connect to S3: {e}")
 
 
-async def ensure_s3_bucket():
-    """Async wrapper for S3 bucket check - non-blocking startup."""
-    loop = asyncio.get_running_loop()
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        try:
-            # Run S3 check in thread pool to avoid blocking startup
-            await asyncio.wait_for(
-                loop.run_in_executor(executor, _ensure_s3_bucket_sync),
-                timeout=5.0  # 5 second timeout to prevent hanging
-            )
-        except asyncio.TimeoutError:
-            print("⚠ Warning: S3 bucket check timed out after 5 seconds")
-        except Exception as e:
-            print(f"⚠ Warning: S3 bucket check failed: {e}")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - non-blocking S3 initialization
-    await ensure_s3_bucket()
+    # Validate production settings on startup
+    try:
+        settings.validate_production_settings()
+    except ValueError as e:
+        logging.error("Production settings validation failed: %s", e)
+        sys.exit(1)
+    
+    # Configurable S3 timeout
+    s3_timeout = 30.0 if settings.is_production else 10.0
+    
+    loop = asyncio.get_running_loop()
+    # Use explicit executor for S3 check
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        try:
+            await asyncio.wait_for(
+                loop.run_in_executor(executor, _ensure_s3_bucket_sync),
+                timeout=s3_timeout
+            )
+            print("✓ S3 bucket initialized successfully")
+        except asyncio.TimeoutError:
+            print(f"⚠️  S3 bucket initialization timed out after {s3_timeout}s")
+            print("   The application will continue, but file uploads may fail")
+        except Exception as e:
+            print(f"⚠️  S3 initialization failed: {e}")
+            print("   The application will continue, but file uploads may fail")
+    
     print("✓ ErgoLab API started with performance monitoring")
     yield
     # Shutdown
@@ -84,6 +100,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+# Configure rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Add performance monitoring middleware
 app.add_middleware(MetricsMiddleware)
@@ -92,9 +112,23 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
+    expose_headers=["Content-Length", "Content-Type"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Log CORS configuration on startup
+@app.on_event("startup")
+async def log_cors_config():
+    import sys
+    print(f"🌐 CORS enabled for origins: {settings.cors_origins_list}", file=sys.stderr)
 
 app.include_router(materials.router)
 app.include_router(inventory.router)
@@ -108,6 +142,7 @@ app.include_router(reports.router)
 app.include_router(notifications.router)
 app.include_router(users.router)
 app.include_router(analytics.router)
+app.include_router(audit.router)
 app.include_router(reports_full.router, prefix="/api/reports", tags=["Reports System"])
 app.include_router(websockets.router)
 
